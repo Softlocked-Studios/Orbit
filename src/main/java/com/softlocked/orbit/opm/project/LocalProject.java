@@ -1,6 +1,7 @@
 package com.softlocked.orbit.opm.project;
 
 import com.softlocked.orbit.core.ast.ASTNode;
+import com.softlocked.orbit.core.exception.ParsingException;
 import com.softlocked.orbit.lexer.Lexer;
 import com.softlocked.orbit.opm.packager.PackageDownloader;
 import com.softlocked.orbit.interpreter.memory.GlobalContext;
@@ -58,11 +59,19 @@ public class LocalProject {
         byte[] mainFile = Files.readAllBytes(new File(entrypoint).toPath());
         String mainCode = new String(mainFile);
 
-        List<String> tokens = new Lexer(mainCode).tokenize();
+        try {
+            List<String> tokens = new Lexer(mainCode).tokenize();
 
-        ASTNode program = Parser.parse(tokens, context);
+            ASTNode program = Parser.parse(tokens, context);
 
-        program.evaluate(context);
+            program.evaluate(context);
+        } catch (ParsingException e) {
+            System.err.println("\u001B[31m[ERROR]\u001B[0m Failed to parse " + entrypoint);
+            System.out.println(e.getMessage());
+        } catch (Exception e) {
+            System.err.println("\u001B[31m[ERROR]\u001B[0m Failed to run " + entrypoint);
+            System.out.println(e.getMessage());
+        }
     }
 
     public void build() throws Exception {

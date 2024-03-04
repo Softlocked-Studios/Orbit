@@ -9,7 +9,11 @@ import com.softlocked.orbit.core.exception.ParsingException;
 import com.softlocked.orbit.interpreter.function.ClassConstructor;
 import com.softlocked.orbit.interpreter.function.NativeFunction;
 import com.softlocked.orbit.java.JarLoader;
+import com.softlocked.orbit.java.OrbitJavaLibrary;
 import com.softlocked.orbit.lexer.Lexer;
+import com.softlocked.orbit.libraries.Container_Library;
+import com.softlocked.orbit.libraries.Standard_Library;
+import com.softlocked.orbit.libraries.Time_Library;
 import com.softlocked.orbit.memory.ILocalContext;
 import com.softlocked.orbit.memory.LocalContext;
 import com.softlocked.orbit.opm.ast.pkg.ImportFileASTNode;
@@ -45,6 +49,8 @@ public class GlobalContext extends LocalContext {
     private final HashSet<String> importedModules = new HashSet<>();
     private final HashSet<String> importedFiles = new HashSet<>();
 
+    private static final List<OrbitJavaLibrary> builtInLibraries = new ArrayList<>();
+
     static {
         primitives.put("int", int.class);
         primitives.put("float", float.class);
@@ -66,6 +72,10 @@ public class GlobalContext extends LocalContext {
 
         primitives.put("list", List.class);
         primitives.put("map", Map.class);
+
+        builtInLibraries.add(new Standard_Library());
+        builtInLibraries.add(new Container_Library());
+        builtInLibraries.add(new Time_Library());
     }
 
     public static Class<?> getPrimitiveType(String name) {
@@ -95,6 +105,9 @@ public class GlobalContext extends LocalContext {
     }
 
     public void addClass(OrbitClass orbitClass) {
+        if(classes.containsKey(orbitClass.getName()))
+            throw new RuntimeException("Class " + orbitClass.getName() + " already defined");
+
         classes.put(orbitClass.getName(), orbitClass);
 
         if(orbitClass.getConstructors().isEmpty()) {
@@ -127,53 +140,9 @@ public class GlobalContext extends LocalContext {
         this.parentPath = parentPath;
         this.packagePath = packagePath;
 
-        addFunction(new NativeFunction("print", -1, Variable.Type.VOID) {
-            @Override
-            public Object call(ILocalContext context, List<Object> args) {
-                StringJoiner joiner = new StringJoiner(" ");
-
-                for (Object arg : args) {
-                    joiner.add(Utils.cast(arg, String.class) + "");
-                }
-
-                System.out.println(joiner);
-
-                return null;
-            }
-        });
-
-        addFunction(new NativeFunction("typeof", 1, Variable.Type.STRING) {
-            @Override
-            public Object call(ILocalContext context, List<Object> args) {
-                Object obj = args.get(0);
-
-                if(obj == null) {
-                    return "null";
-                }
-
-                Variable.Type type = Variable.Type.fromJavaClass(obj.getClass());
-
-                return type != null ? type.getTypeName(obj) : "void";
-            }
-        });
-
-        addFunction(new NativeFunction("system.load", List.of(Variable.Type.STRING), Variable.Type.VOID) {
-            @Override
-            public Object call(ILocalContext context, List<Object> args) {
-                String path = (String) args.get(0);
-
-                JarLoader.loadLibrary(context.getRoot(), path);
-
-                return null;
-            }
-        });
-
-        addFunction(new NativeFunction("modulePath", 0, Variable.Type.STRING) {
-            @Override
-            public Object call(ILocalContext context, List<Object> args) {
-                return context.getRoot().getPackagePath();
-            }
-        });
+        for(OrbitJavaLibrary library : builtInLibraries) {
+            library.load(this);
+        }
     }
 
     public String getPackagePath() {

@@ -37,6 +37,7 @@ import com.softlocked.orbit.lexer.Lexer;
 import java.util.*;
 
 public class Parser {
+    private static boolean insideClass = false;
     public static ASTNode parse(List<String> tokens, GlobalContext context) throws ParsingException {
         BodyASTNode body = new BodyASTNode(new ArrayList<>());
 
@@ -123,86 +124,89 @@ public class Parser {
                 List<String> superClasses = new ArrayList<>();
                 ASTNode bodyNode = null;
 
-                if(next.equals(":") || next.equals("extends")) {
-                    int bodyStart = findNext(tokens, nextIndex + 1, "{");
+                insideClass = true;
 
-                    if(bodyStart == -1) {
-                        throw new ParsingException("Unexpected end of file");
+                try {
+                    if (next.equals(":") || next.equals("extends")) {
+                        int bodyStart = findNext(tokens, nextIndex + 1, "{");
+
+                        if (bodyStart == -1) {
+                            throw new ParsingException("Unexpected end of file");
+                        }
+
+                        superClasses = new ArrayList<>(tokens.subList(nextIndex + 1, bodyStart));
+                        superClasses.removeIf(s -> s.equals(","));
+
+                        int bodyEnd = getPair(tokens, bodyStart, "{", "}");
+
+                        if (bodyEnd == -1) {
+                            throw new ParsingException("Unexpected end of file");
+                        }
+
+                        bodyNode = parse(tokens.subList(bodyStart + 1, bodyEnd), context);
+
+                        i = bodyEnd;
+                    } else if (next.equals("{")) {
+                        int bodyStart = nextIndex;
+
+                        int bodyEnd = getPair(tokens, bodyStart, "{", "}");
+
+                        if (bodyEnd == -1) {
+                            throw new ParsingException("Unexpected end of file");
+                        }
+
+                        bodyNode = parse(tokens.subList(bodyStart + 1, bodyEnd), context);
+
+                        i = bodyEnd;
+                    } else {
+                        throw new ParsingException("Invalid class declaration");
                     }
 
-                    superClasses = new ArrayList<>(tokens.subList(nextIndex + 1, bodyStart));
-                    superClasses.removeIf(s -> s.equals(","));
+                    // Now go through the body. If there's function or variable declarations, add them to the class
+                    // If it's anything else, throw an error
+                    HashMap<String, Pair<Variable.Type, ASTNode>> fields = new HashMap<>();
+                    HashMap<Pair<String, Integer>, IFunction> functions = new HashMap<>();
+                    HashMap<Integer, ClassConstructor> constructors = new HashMap<>();
 
-                    int bodyEnd = getPair(tokens, bodyStart, "{", "}");
-
-                    if(bodyEnd == -1) {
-                        throw new ParsingException("Unexpected end of file");
+                    if (bodyNode instanceof BodyASTNode bd) {
+                        for (ASTNode node : bd.statements()) {
+                            if (node instanceof DecVarASTNode decVarASTNode) {
+                                fields.put(decVarASTNode.variableName(), new Pair<>(decVarASTNode.type(), decVarASTNode.value()));
+                            } else if (node instanceof ClassConstructor constructor) {
+                                constructors.put(constructor.getParameterCount(), constructor);
+                            } else if (node instanceof OrbitFunction function) {
+                                functions.put(new Pair<>(function.getName(), function.getParameterCount()), function);
+                            } else {
+                                throw new ParsingException("Invalid class body");
+                            }
+                        }
+                    } else if (bodyNode instanceof DecVarASTNode decVarASTNode) {
+                        fields.put(decVarASTNode.variableName(), new Pair<>(decVarASTNode.type(), decVarASTNode.value()));
+                    } else if (bodyNode instanceof ClassConstructor constructor) {
+                        constructors.put(constructor.getParameterCount(), constructor);
+                    } else if (bodyNode instanceof OrbitFunction function) {
+                        functions.put(new Pair<>(function.getName(), function.getParameterCount()), function);
+                    } else {
+                        throw new ParsingException("Invalid class body");
                     }
 
-                    bodyNode = parse(tokens.subList(bodyStart + 1, bodyEnd), context);
+                    ClassDefinitionASTNode classDef = new ClassDefinitionASTNode(
+                            className,
+                            superClasses,
+                            fields,
+                            functions,
+                            constructors
+                    );
 
-                    i = bodyEnd;
-                } else if (next.equals("{")) {
-                    int bodyStart = nextIndex;
+                    body.addNode(classDef);
 
-                    int bodyEnd = getPair(tokens, bodyStart, "{", "}");
+                    insideClass = false;
 
-                    if(bodyEnd == -1) {
-                        throw new ParsingException("Unexpected end of file");
-                    }
-
-                    bodyNode = parse(tokens.subList(bodyStart + 1, bodyEnd), context);
-
-                    i = bodyEnd;
-                } else {
-                    throw new ParsingException("Invalid class declaration");
+                    continue;
+                } catch (ParsingException e) {
+                    insideClass = false;
+                    throw e;
                 }
-
-                // Now go through the body. If there's function or variable declarations, add them to the class
-                // If it's anything else, throw an error
-                HashMap<String, Pair<Variable.Type, ASTNode>> fields = new HashMap<>();
-                HashMap<Pair<String, Integer>, IFunction> functions = new HashMap<>();
-                HashMap<Integer, ClassConstructor> constructors = new HashMap<>();
-
-                if(bodyNode instanceof BodyASTNode bd) {
-                    for(ASTNode node : bd.statements()) {
-                        if(node instanceof DecVarASTNode decVarASTNode) {
-                            fields.put(decVarASTNode.variableName(), new Pair<>(decVarASTNode.type(), decVarASTNode.value()));
-                        }
-                        else if(node instanceof ClassConstructor constructor) {
-                            constructors.put(constructor.getParameterCount(), constructor);
-                        }
-                        else if(node instanceof OrbitFunction function) {
-                            functions.put(new Pair<>(function.getName(), function.getParameterCount()), function);
-                        }
-                        else {
-                            throw new ParsingException("Invalid class body");
-                        }
-                    }
-                } else if(bodyNode instanceof DecVarASTNode decVarASTNode) {
-                    fields.put(decVarASTNode.variableName(), new Pair<>(decVarASTNode.type(), decVarASTNode.value()));
-                }
-                else if(bodyNode instanceof ClassConstructor constructor) {
-                    constructors.put(constructor.getParameterCount(), constructor);
-                }
-                else if(bodyNode instanceof OrbitFunction function) {
-                    functions.put(new Pair<>(function.getName(), function.getParameterCount()), function);
-                }
-                else {
-                    throw new ParsingException("Invalid class body");
-                }
-
-                ClassDefinitionASTNode classDef = new ClassDefinitionASTNode(
-                        className,
-                        superClasses,
-                        fields,
-                        functions,
-                        constructors
-                );
-
-                body.addNode(classDef);
-
-                continue;
             }
 
             // 1. Variable Declaration
@@ -371,7 +375,7 @@ public class Parser {
                 }
             }
 
-            if(token.matches(Utils.IDENTIFIER_REGEX) && !Utils.isKeyword(token)) {
+            if(token.matches(Utils.IDENTIFIER_REGEX) && !Utils.isKeyword(token) && insideClass) {
                 String next = getNext(tokens, i + 1);
                 int nextIndex = findNext(tokens, i + 1, next);
 

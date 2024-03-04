@@ -79,11 +79,15 @@ public class Utils {
             return original;
         }
 
-        if(!target.isAssignableFrom(original.getClass())) {
+        if(target.isAssignableFrom(original.getClass())) {
             return original;
         }
 
         if(original instanceof OrbitObject && target.equals(OrbitObject.class)) {
+            return original;
+        }
+
+        if(original.getClass().isArray() && target.isArray()) {
             return original;
         }
 
@@ -180,7 +184,7 @@ public class Utils {
                 } catch (RuntimeException e) {
                     return original.toString();
                 }
-            } else if(original instanceof Object[]) {
+            } else if(original.getClass().isArray()) {
                 return Arrays.toString((Object[]) original);
             } else {
                 return original.toString();
@@ -199,14 +203,14 @@ public class Utils {
             }
         }
 
-        else if (target.equals(Object[].class) && original instanceof List<?>) {
+        else if (target.isArray() && original instanceof List<?>) {
             List<Object> list = (List<Object>) original;
             Object[] array = new Object[list.size()];
             for (int i = 0; i < list.size(); i++) {
                 array[i] = list.get(i);
             }
             return array;
-        } else if (target.equals(List.class) && original instanceof Object[]) {
+        } else if (target.equals(List.class) && original.getClass().isArray()) {
             List<Object> list = new ArrayList<>();
             Collections.addAll(list, (Object[]) original);
             return list;

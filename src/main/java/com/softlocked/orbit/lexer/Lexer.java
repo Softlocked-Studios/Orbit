@@ -1,6 +1,7 @@
 package com.softlocked.orbit.lexer;
 
 import com.softlocked.orbit.core.ast.operation.OperationType;
+import com.softlocked.orbit.core.exception.ParsingException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,7 +18,7 @@ public class Lexer {
 
     public Lexer(String input) {
         this.input = input;
-        if(input.length() > 0)
+        if(!input.isEmpty())
             c = input.charAt(p);
     }
 
@@ -30,7 +31,7 @@ public class Lexer {
         tokens.clear();
     }
 
-    public List<String> tokenize() throws RuntimeException {
+    public List<String> tokenize() throws ParsingException {
         if (input.isEmpty()) {
             return tokens;
         }
@@ -199,7 +200,7 @@ public class Lexer {
                                     }
                                 }
 
-                                throw new RuntimeException("Block comment not closed");
+                                throw new ParsingException("Block comment not closed");
                             }
 
                             // Remove the tokens that are inside the block comment, including the start and end tokens
@@ -252,7 +253,7 @@ public class Lexer {
 
                             // Error handling
                             if (j == tokens.size()) {
-                                throw new RuntimeException("Block comment not closed");
+                                throw new ParsingException("Block comment not closed");
                             }
 
                             // Remove the tokens that are inside the block comment, including the start and end tokens

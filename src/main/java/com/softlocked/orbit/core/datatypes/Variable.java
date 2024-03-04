@@ -2,6 +2,8 @@ package com.softlocked.orbit.core.datatypes;
 
 import com.softlocked.orbit.core.datatypes.classes.OrbitObject;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -88,12 +90,13 @@ public class Variable {
             else if (clazz == char.class || clazz == Character.class) return CHAR;
             else if (clazz == boolean.class || clazz == Boolean.class) return BOOL;
             else if (clazz == String.class) return STRING;
-            else if (clazz == Object[].class) return ARRAY;
             else if (clazz == Object.class) return ANY;
             else if (clazz == void.class || clazz == Void.class) return VOID;
             else if (clazz == OrbitObject.class) return CLASS;
-            else if (clazz == java.util.List.class) return LIST;
-            else if (clazz == java.util.Map.class) return MAP;
+            else if (clazz == java.util.List.class || clazz == ArrayList.class) return LIST;
+            else if (clazz == java.util.Map.class || clazz == HashMap.class) return MAP;
+            // arrays
+            else if (clazz.isArray()) return ARRAY;
             else return null;
         }
 
