@@ -86,7 +86,7 @@ public record OrbitPackage(String name, String version, String description, Stri
         boolean missing = true;
         // Installing dependencies from metadata.yml
         for (OrbitPackage.Dependency dep : dependencies) {
-            String path = moduleFolder + dep.name() + "-" + dep.version();
+            String path = moduleFolder + dep.name();
 
             // Check if said folder exists
             File depFolder = new File(path);

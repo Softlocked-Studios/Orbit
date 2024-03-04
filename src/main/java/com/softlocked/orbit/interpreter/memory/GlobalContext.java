@@ -158,8 +158,6 @@ public class GlobalContext extends LocalContext {
 
                 importedFiles.add(path + File.separator + importFileASTNode.fileName());
 
-                System.out.println("Importing file " + importFileASTNode.fileName() + " from " + path);
-
                 importFileASTNode.importFile(this, path);
             }
             else if(ast instanceof ImportModuleASTNode importModuleASTNode) {
@@ -169,15 +167,33 @@ public class GlobalContext extends LocalContext {
 
                 importedModules.add(importModuleASTNode.moduleName());
 
-                System.out.println("Importing module " + importModuleASTNode.moduleName() + " from " + path);
-
                 importModuleASTNode.importFile(this, path);
             }
         }
         else if(ast instanceof BodyASTNode body) {
             for(ASTNode node : body.statements()) {
-                if(node instanceof IFunction || node instanceof ClassDefinitionASTNode || node instanceof DecVarASTNode || node instanceof ImportASTNode) {
+                if(node instanceof IFunction || node instanceof ClassDefinitionASTNode || node instanceof DecVarASTNode) {
                     node.evaluate(this);
+                }
+                else if(node instanceof ImportASTNode) {
+                    if(node instanceof ImportFileASTNode importFileASTNode) {
+                        if(importedFiles.contains(path + File.separator + importFileASTNode.fileName())) {
+                            return;
+                        }
+
+                        importedFiles.add(path + File.separator + importFileASTNode.fileName());
+
+                        importFileASTNode.importFile(this, path);
+                    }
+                    else if(node instanceof ImportModuleASTNode importModuleASTNode) {
+                        if(importedModules.contains(importModuleASTNode.moduleName())) {
+                            return;
+                        }
+
+                        importedModules.add(importModuleASTNode.moduleName());
+
+                        importModuleASTNode.importFile(this, path);
+                    }
                 }
             }
         }

@@ -22,138 +22,56 @@ public class PackageDownloader {
 
         connection.connect();
 
-        if(!packageVersion.equals("latest")) {
-            String localPath = modulePath + File.separator + packageName + "-" + packageVersion;
+        String localPath = modulePath + File.separator + packageName;
 
-            // Download the file
-            try (InputStream in = connection.getInputStream()) {
-                new File(localPath).mkdirs();
+        // Download the file
+        try (InputStream in = connection.getInputStream()) {
+            new File(localPath).mkdirs();
 
-                File file = new File(localPath + File.separator + "package.zip");
-                file.createNewFile();
+            File file = new File(localPath + File.separator + "package.zip");
+            file.createNewFile();
 
-                OutputStream out = new FileOutputStream(file);
+            OutputStream out = new FileOutputStream(file);
 
-                byte[] buffer = new byte[1024];
-                int length;
+            byte[] buffer = new byte[1024];
+            int length;
 
-                while ((length = in.read(buffer)) != -1) {
-                    out.write(buffer, 0, length);
-                }
-
-                out.close();
+            while ((length = in.read(buffer)) != -1) {
+                out.write(buffer, 0, length);
             }
 
-            packageAmount++;
+            out.close();
+        }
 
-            // Now unzip the file
-            String zipPath = localPath + File.separator + "package.zip";
-            unzip(zipPath, localPath);
+        packageAmount++;
 
-            // Delete the zip file
-            File zipFile = new File(zipPath);
+        // Now unzip the file
+        String zipPath = localPath + File.separator + "package.zip";
+        unzip(zipPath, localPath);
 
-            Files.deleteIfExists(zipFile.toPath());
+        // Delete the zip file
+        File zipFile = new File(zipPath);
 
-            // Now go open the metadata.yml files and download ITS dependencies
-            File metadataFile = new File(localPath + File.separator + "metadata.yml");
+        Files.deleteIfExists(zipFile.toPath());
 
-            if (metadataFile.exists()) {
-                byte[] metadata = Files.readAllBytes(metadataFile.toPath());
-                String metadataContent = new String(metadata);
+        // Now go open the metadata.yml files and download ITS dependencies
+        File metadataFile = new File(localPath + File.separator + "metadata.yml");
 
-                OrbitPackage pkg = OrbitPackage.fromYaml(metadataContent);
-
-                packageAmount += pkg.installDependencies(modulePath, false);
-            }
-
-            if (log) {
-                return OrbitPackage.fromYaml(new String(Files.readAllBytes(metadataFile.toPath())));
-            }
-
-            return packageAmount;
-        } else {
-            // Download the zip into the modules folder instead, and then check the metadata.yml file to copy it in the right place
-            try (InputStream in = connection.getInputStream()) {
-                File file = new File(modulePath + File.separator + "package.zip");
-                file.createNewFile();
-
-                OutputStream out = new FileOutputStream(file);
-
-                byte[] buffer = new byte[1024];
-                int length;
-
-                while ((length = in.read(buffer)) != -1) {
-                    out.write(buffer, 0, length);
-                }
-
-                out.close();
-            }
-
-            packageAmount++;
-
-            // Now unzip the file
-            String zipPath = modulePath + File.separator + "package.zip";
-            unzip(zipPath, modulePath + File.separator + packageName + "-latest");
-
-            // Delete the zip file
-            File zipFile = new File(zipPath);
-
-            Files.deleteIfExists(zipFile.toPath());
-
-            // Now go to the destination and open the metadata.yml
-            File metadataFile = new File(modulePath + File.separator + packageName + "-latest" + File.separator + "metadata.yml");
-
-            if (!metadataFile.exists()) {
-                throw new FileNotFoundException("metadata.yml not found in " + modulePath + File.separator + packageName + "-latest");
-            }
-
+        if (metadataFile.exists()) {
             byte[] metadata = Files.readAllBytes(metadataFile.toPath());
             String metadataContent = new String(metadata);
 
             OrbitPackage pkg = OrbitPackage.fromYaml(metadataContent);
 
-            // And create a new folder with the correct version
-            File newFolder = new File(modulePath + File.separator + packageName + "-" + pkg.version());
-            newFolder.mkdirs();
-
-            // Copy the contents of the latest folder to the new folder
-            File latestFolder = new File(modulePath + File.separator + packageName + "-latest");
-            File[] files = latestFolder.listFiles();
-
-            try {
-                for (File f : files) {
-                    if (f.isDirectory()) {
-                        File newDir = new File(newFolder.getAbsolutePath() + File.separator + f.getName());
-                        newDir.mkdirs();
-
-                        File[] subFiles = f.listFiles();
-
-                        for (File subFile : subFiles) {
-                            Files.copy(subFile.toPath(), new File(newDir.getAbsolutePath() + File.separator + subFile.getName()).toPath());
-                        }
-                    } else {
-                        Files.copy(f.toPath(), new File(newFolder.getAbsolutePath() + File.separator + f.getName()).toPath());
-                    }
-                }
-            } catch (IOException ignored) {
-                // If an error occurs, just delete the folder and return
-                delete(latestFolder);
-                return 0;
-            }
-
-            // Lastly remove the latest folder
-            delete(latestFolder);
-
-            // and install the dependencies
             packageAmount += pkg.installDependencies(modulePath, false);
-
-            if (log) {
-                return pkg;
-            }
-
-            return packageAmount;
         }
+
+        if (log) {
+            return OrbitPackage.fromYaml(new String(Files.readAllBytes(metadataFile.toPath())));
+        }
+
+        return packageAmount;
+
     }
 
     private static List<File> unzip(String zipFilePath, String destDirectory) throws IOException {
