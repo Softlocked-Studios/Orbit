@@ -2,6 +2,7 @@ package com.softlocked.orbit.memory;
 
 import com.softlocked.orbit.core.datatypes.Variable;
 import com.softlocked.orbit.core.datatypes.functions.IFunction;
+import com.softlocked.orbit.interpreter.memory.GlobalContext;
 
 import java.util.HashMap;
 
@@ -11,7 +12,7 @@ import java.util.HashMap;
  */
 public class LocalContext implements ILocalContext {
     protected final ILocalContext parent;
-    protected final ILocalContext root;
+    protected final GlobalContext root;
 
     protected final HashMap<String, Variable> variables = new HashMap<>();
 
@@ -22,7 +23,7 @@ public class LocalContext implements ILocalContext {
 
     public LocalContext() {
         this.parent = null;
-        this.root = this;
+        this.root = (GlobalContext) this;
     }
 
     @Override
@@ -52,7 +53,7 @@ public class LocalContext implements ILocalContext {
     }
 
     @Override
-    public ILocalContext getRoot() {
+    public GlobalContext getRoot() {
         return root;
     }
 

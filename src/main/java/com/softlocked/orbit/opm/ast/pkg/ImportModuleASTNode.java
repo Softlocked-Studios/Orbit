@@ -16,7 +16,7 @@ import java.util.List;
 public record ImportModuleASTNode(String moduleName) implements ImportASTNode {
     @Override
     public Object evaluate(ILocalContext context) {
-        GlobalContext globalContext = (GlobalContext) context.getRoot();
+        GlobalContext globalContext = context.getRoot();
 
         importFile(globalContext, globalContext.getPackagePath());
 

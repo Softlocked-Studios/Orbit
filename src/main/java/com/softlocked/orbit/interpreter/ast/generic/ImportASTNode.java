@@ -8,7 +8,7 @@ public interface ImportASTNode extends ASTNode {
     void importFile(GlobalContext globalContext, String parentPath);
 
     default Object evaluate(ILocalContext context) {
-        GlobalContext globalContext = (GlobalContext) context.getRoot();
+        GlobalContext globalContext = context.getRoot();
 
         importFile(globalContext, globalContext.getParentPath());
 

@@ -15,7 +15,7 @@ public record ClassDefinitionASTNode(String name, List<String> superClasses, Has
                                      HashMap<Pair<String, Integer>, IFunction> functions, HashMap<Integer, IFunction> constructors) implements ASTNode {
     @Override
     public Object evaluate(ILocalContext context) {
-        GlobalContext globalContext = (GlobalContext) context.getRoot();
+        GlobalContext globalContext = context.getRoot();
 
         List<OrbitClass> superClasses = superClasses().stream().map(globalContext::getClassType).toList();
 

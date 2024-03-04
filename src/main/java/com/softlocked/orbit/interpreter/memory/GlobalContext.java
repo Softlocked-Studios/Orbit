@@ -6,6 +6,7 @@ import com.softlocked.orbit.core.datatypes.classes.OrbitClass;
 import com.softlocked.orbit.core.datatypes.functions.IFunction;
 import com.softlocked.orbit.core.exception.ParsingException;
 import com.softlocked.orbit.interpreter.function.NativeFunction;
+import com.softlocked.orbit.java.JarLoader;
 import com.softlocked.orbit.lexer.Lexer;
 import com.softlocked.orbit.memory.ILocalContext;
 import com.softlocked.orbit.memory.LocalContext;
@@ -17,6 +18,7 @@ import com.softlocked.orbit.interpreter.ast.generic.BodyASTNode;
 import com.softlocked.orbit.interpreter.ast.generic.ImportASTNode;
 import com.softlocked.orbit.interpreter.ast.object.ClassDefinitionASTNode;
 import com.softlocked.orbit.interpreter.ast.variable.DecVarASTNode;
+import com.softlocked.orbit.utils.Utils;
 
 import java.io.File;
 import java.io.IOException;
@@ -98,23 +100,31 @@ public class GlobalContext extends LocalContext {
         this.parentPath = parentPath;
         this.packagePath = packagePath;
 
-        functions.put(
-                new Pair<>("print", -1),
-                new NativeFunction("print", -1, Variable.Type.VOID) {
-                    @Override
-                    public Object call(ILocalContext context, List<Object> args) {
-                        StringJoiner joiner = new StringJoiner(" ");
+        addFunction(new NativeFunction("print", -1, Variable.Type.VOID) {
+            @Override
+            public Object call(ILocalContext context, List<Object> args) {
+                StringJoiner joiner = new StringJoiner(" ");
 
-                        for (Object arg : args) {
-                            joiner.add(arg.toString());
-                        }
-
-                        System.out.println(joiner.toString());
-
-                        return null;
-                    }
+                for (Object arg : args) {
+                    joiner.add(Utils.cast(arg, String.class) + "");
                 }
-        );
+
+                System.out.println(joiner);
+
+                return null;
+            }
+        });
+
+        addFunction(new NativeFunction("system.load", List.of(Variable.Type.STRING), Variable.Type.VOID) {
+            @Override
+            public Object call(ILocalContext context, List<Object> args) {
+                String path = (String) args.get(0);
+
+                JarLoader.loadLibrary(context.getRoot(), path);
+
+                return null;
+            }
+        });
     }
 
     public String getPackagePath() {
@@ -172,5 +182,4 @@ public class GlobalContext extends LocalContext {
             }
         }
     }
-
 }

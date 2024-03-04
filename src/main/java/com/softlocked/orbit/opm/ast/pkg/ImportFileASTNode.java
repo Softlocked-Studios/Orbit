@@ -7,7 +7,7 @@ import com.softlocked.orbit.interpreter.memory.GlobalContext;
 public record ImportFileASTNode(String fileName) implements ImportASTNode {
     @Override
     public Object evaluate(ILocalContext context) {
-        GlobalContext globalContext = (GlobalContext) context.getRoot();
+        GlobalContext globalContext = context.getRoot();
 
         try {
             globalContext.importFile(this.fileName());
