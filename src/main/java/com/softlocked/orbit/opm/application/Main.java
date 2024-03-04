@@ -23,7 +23,7 @@ public class Main {
                     System.out.println("Commands:");
                     System.out.println("opkg init                      Creates a metadata.yml file in the current directory");
                     System.out.println("opkg install <name>            Installs a package from the central repository");
-                    System.out.println("opkg install <name> <url>   Installs a package from a custom repository");
+                    System.out.println("opkg install <name> <url>      Installs a package from a custom repository");
                     System.out.println("opkg uninstall <name>          Uninstalls a package from the current project");
                     System.out.println("opkg build                     Builds the project in the current directory");
                     System.out.println("opkg run                       Runs the project in the current directory");
@@ -109,6 +109,8 @@ public class Main {
                     System.out.println("<none>      Runs the specified file directly");
                     return;
                 }
+
+                throw new IllegalArgumentException("Orbit command not implemented yet");
             }
         } else {
             System.out.println("\u001B[31mNo command specified.\u001B[0m");

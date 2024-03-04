@@ -226,6 +226,12 @@ public class Evaluator {
     }
 
     public static Object equal(Object a, Object b) {
+        if(a == null) {
+            return b == null;
+        }
+        else if(b == null) {
+            return false;
+        }
         if(!(a instanceof OrbitObject)) {
             int priority = Utils.getPriority(a.getClass(), b.getClass());
 
@@ -261,6 +267,12 @@ public class Evaluator {
     }
 
     public static Object notEquals(Object a, Object b) {
+        if(a == null) {
+            return b != null;
+        }
+        else if(b == null) {
+            return true;
+        }
         if(!(a instanceof OrbitObject)) {
             int priority = Utils.getPriority(a.getClass(), b.getClass());
 

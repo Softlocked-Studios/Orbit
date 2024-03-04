@@ -123,6 +123,10 @@ public class OrbitObject {
 
     @Override
     public String toString() {
-        return clazz.getName() + "(fields=" + fields + ")";
+        String res = super.toString();
+
+        // Split by @ and add with the class name
+        String[] split = res.split("@");
+        return clazz.getName() + "@" + split[1];
     }
 }

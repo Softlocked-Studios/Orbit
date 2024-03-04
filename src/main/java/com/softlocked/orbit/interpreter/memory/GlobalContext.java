@@ -153,8 +153,7 @@ public class GlobalContext extends LocalContext {
 
                 Variable.Type type = Variable.Type.fromJavaClass(obj.getClass());
 
-                assert type != null;
-                return type.getTypeName(obj);
+                return type != null ? type.getTypeName(obj) : "void";
             }
         });
 

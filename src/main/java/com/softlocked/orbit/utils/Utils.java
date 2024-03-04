@@ -175,7 +175,11 @@ public class Utils {
                 Gson gson = new Gson();
                 return gson.toJson(original);
             } else if(original instanceof OrbitObject b) {
-                return b.callFunction("cast", List.of("string"));
+                try {
+                    return b.callFunction("cast", List.of("string"));
+                } catch (RuntimeException e) {
+                    return original.toString();
+                }
             } else if(original instanceof Object[]) {
                 return Arrays.toString((Object[]) original);
             } else {
