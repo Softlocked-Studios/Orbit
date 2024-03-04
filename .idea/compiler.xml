@@ -9,5 +9,8 @@
         <module name="orbit" />
       </profile>
     </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="base64-module" target="17" />
+    </bytecodeTargetLevel>
   </component>
 </project>

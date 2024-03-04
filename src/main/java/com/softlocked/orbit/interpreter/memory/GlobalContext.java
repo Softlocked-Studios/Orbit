@@ -125,6 +125,13 @@ public class GlobalContext extends LocalContext {
                 return null;
             }
         });
+
+        addFunction(new NativeFunction("modulePath", 0, Variable.Type.STRING) {
+            @Override
+            public Object call(ILocalContext context, List<Object> args) {
+                return context.getRoot().getPackagePath();
+            }
+        });
     }
 
     public String getPackagePath() {
@@ -148,9 +155,7 @@ public class GlobalContext extends LocalContext {
     }
 
     public void importModule(ASTNode ast, String path) {
-        if(ast instanceof IFunction || ast instanceof ClassDefinitionASTNode || ast instanceof DecVarASTNode) {
-            ast.evaluate(this);
-        } else if(ast instanceof ImportASTNode) {
+        if(ast instanceof ImportASTNode) {
             if(ast instanceof ImportFileASTNode importFileASTNode) {
                 if(importedFiles.contains(path + File.separator + importFileASTNode.fileName())) {
                     return;
@@ -172,10 +177,7 @@ public class GlobalContext extends LocalContext {
         }
         else if(ast instanceof BodyASTNode body) {
             for(ASTNode node : body.statements()) {
-                if(node instanceof IFunction || node instanceof ClassDefinitionASTNode || node instanceof DecVarASTNode) {
-                    node.evaluate(this);
-                }
-                else if(node instanceof ImportASTNode) {
+                if(node instanceof ImportASTNode) {
                     if(node instanceof ImportFileASTNode importFileASTNode) {
                         if(importedFiles.contains(path + File.separator + importFileASTNode.fileName())) {
                             return;
@@ -195,7 +197,12 @@ public class GlobalContext extends LocalContext {
                         importModuleASTNode.importFile(this, path);
                     }
                 }
+                else {
+                    node.evaluate(this);
+                }
             }
+        } else {
+            ast.evaluate(this);
         }
     }
 }
