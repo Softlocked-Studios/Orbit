@@ -11,7 +11,7 @@ import com.softlocked.orbit.utils.Pair;
 import java.util.HashMap;
 import java.util.List;
 
-public record ClassDefinitionASTNode(String name, List<String> superClasses, HashMap<String, Variable.Type> fields,
+public record ClassDefinitionASTNode(String name, List<String> superClasses, HashMap<String, Pair<Variable.Type, ASTNode>> fields,
                                      HashMap<Pair<String, Integer>, IFunction> functions, HashMap<Integer, IFunction> constructors) implements ASTNode {
     @Override
     public Object evaluate(ILocalContext context) {

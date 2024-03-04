@@ -3,9 +3,12 @@ package com.softlocked.orbit.parser;
 import com.softlocked.orbit.core.ast.operation.OperationType;
 import com.softlocked.orbit.core.ast.ASTNode;
 import com.softlocked.orbit.core.datatypes.Variable;
+import com.softlocked.orbit.core.datatypes.functions.IFunction;
 import com.softlocked.orbit.core.evaluator.Breakpoint;
 import com.softlocked.orbit.core.evaluator.Evaluator;
 import com.softlocked.orbit.core.exception.ParsingException;
+import com.softlocked.orbit.interpreter.ast.object.ClassDefinitionASTNode;
+import com.softlocked.orbit.interpreter.ast.operation.ReferenceASTNode;
 import com.softlocked.orbit.interpreter.ast.value.ValueASTNode;
 import com.softlocked.orbit.interpreter.ast.value.VariableASTNode;
 import com.softlocked.orbit.opm.ast.pkg.ImportFileASTNode;
@@ -93,6 +96,104 @@ public class Parser {
 
                     continue;
                 }
+            }
+
+            else if (token.equals("class")) {
+                String className = getNext(tokens, i + 1);
+                int classNameIndex = findNext(tokens, i + 1, className);
+
+                if(className == null) {
+                    throw new ParsingException("Unexpected end of file");
+                }
+
+                if(!className.matches(Utils.IDENTIFIER_REGEX) || Utils.isKeyword(className)) {
+                    throw new ParsingException("Invalid class name " + className);
+                }
+
+                String next = getNext(tokens, classNameIndex + 1);
+                int nextIndex = findNext(tokens, classNameIndex + 1, next);
+
+                if(next == null) {
+                    throw new ParsingException("Unexpected end of file");
+                }
+
+                // Check either for { or : / extends
+                List<String> superClasses = new ArrayList<>();
+                ASTNode bodyNode = null;
+
+                if(next.equals(":") || next.equals("extends")) {
+                    int bodyStart = findNext(tokens, nextIndex + 1, "{");
+
+                    if(bodyStart == -1) {
+                        throw new ParsingException("Unexpected end of file");
+                    }
+
+                    superClasses = new ArrayList<>(tokens.subList(nextIndex + 1, bodyStart));
+                    superClasses.removeIf(s -> s.equals(","));
+
+                    int bodyEnd = getPair(tokens, bodyStart, "{", "}");
+
+                    if(bodyEnd == -1) {
+                        throw new ParsingException("Unexpected end of file");
+                    }
+
+                    bodyNode = parse(tokens.subList(bodyStart + 1, bodyEnd), context);
+
+                    i = bodyEnd;
+                } else if (next.equals("{")) {
+                    int bodyStart = nextIndex;
+
+                    int bodyEnd = getPair(tokens, bodyStart, "{", "}");
+
+                    if(bodyEnd == -1) {
+                        throw new ParsingException("Unexpected end of file");
+                    }
+
+                    bodyNode = parse(tokens.subList(bodyStart + 1, bodyEnd), context);
+
+                    i = bodyEnd;
+                } else {
+                    throw new ParsingException("Invalid class declaration");
+                }
+
+                // Now go through the body. If there's function or variable declarations, add them to the class
+                // If it's anything else, throw an error
+                HashMap<String, Pair<Variable.Type, ASTNode>> fields = new HashMap<>();
+                HashMap<Pair<String, Integer>, IFunction> functions = new HashMap<>();
+
+                if(bodyNode instanceof BodyASTNode bd) {
+                    for(ASTNode node : bd.statements()) {
+                        if(node instanceof DecVarASTNode decVarASTNode) {
+                            fields.put(decVarASTNode.variableName(), new Pair<>(decVarASTNode.type(), decVarASTNode.value()));
+                        }
+                        else if(node instanceof OrbitFunction function) {
+                            functions.put(new Pair<>(function.getName(), function.getParameterCount()), function);
+                        }
+                        else {
+                            throw new ParsingException("Invalid class body");
+                        }
+                    }
+                } else if(bodyNode instanceof DecVarASTNode decVarASTNode) {
+                    fields.put(decVarASTNode.variableName(), new Pair<>(decVarASTNode.type(), decVarASTNode.value()));
+                }
+                else if(bodyNode instanceof OrbitFunction function) {
+                    functions.put(new Pair<>(function.getName(), function.getParameterCount()), function);
+                }
+                else {
+                    throw new ParsingException("Invalid class body");
+                }
+
+                ClassDefinitionASTNode classDef = new ClassDefinitionASTNode(
+                        className,
+                        superClasses,
+                        fields,
+                        functions,
+                        new HashMap<>()
+                );
+
+                body.addNode(classDef);
+
+                continue;
             }
 
             // 1. Variable Declaration
@@ -270,7 +371,7 @@ public class Parser {
                 ASTNode value;
                 Pair<List<String>, Integer> expression = null;
 
-                if(!next.equals("(")) {
+                if(!next.equals("(") && !next.equals(":")) {
                     if (!next.equals("++") && !next.equals("--")) {
                         expression = fetchExpression(tokens, nextIndex + 1);
                     }
@@ -998,10 +1099,12 @@ public class Parser {
         List<String> postfixExpression = new ArrayList<>();
         Stack<String> operatorStack = new Stack<>();
 
+        System.out.println("Infix: " + infix);
+
         for (int i = 0; i < infix.size(); i++) {
             String token = infix.get(i);
 
-            if (token.equals(",") || token.equals("?") || token.equals(":") || token.equals("=") || token.equals("{") || token.equals("}") || token.equals("[") || token.equals("]")) {
+            if (token.equals(",") || token.equals("?") || token.equals("=") || token.equals("{") || token.equals("}") || token.equals("[") || token.equals("]")) {
                 while (!operatorStack.isEmpty() && !operatorStack.peek().equals("(")) {
                     postfixExpression.add(operatorStack.pop());
                 }
@@ -1059,6 +1162,8 @@ public class Parser {
         while (!operatorStack.isEmpty()) {
             postfixExpression.add(operatorStack.pop());
         }
+
+        System.out.println("Postfix: " + postfixExpression);
 
         return postfixExpression;
     }
@@ -1137,11 +1242,20 @@ public class Parser {
                 ASTNode left = stack.pop();
                 OperationType operationType = OperationType.fromSymbol(token);
 
-                stack.push(new OperationASTNode(left, right, operationType));
+                if(operationType != OperationType.REF) {
+                    stack.push(new OperationASTNode(left, right, operationType));
 
-                // Preprocess the AST. If they're both values, then we can just evaluate them
-                if (left instanceof ValueASTNode && right instanceof ValueASTNode) {
-                    stack.push(new ValueASTNode(stack.pop().evaluate(null)));
+                    // Preprocess the AST. If they're both values, then we can just evaluate them
+                    if (left instanceof ValueASTNode && right instanceof ValueASTNode) {
+                        stack.push(new ValueASTNode(stack.pop().evaluate(null)));
+                    }
+                } else {
+                    stack.push(new ReferenceASTNode(left, right));
+
+                    // If right is a value then throw an error
+                    if(right instanceof ValueASTNode) {
+                        throw new ParsingException("Invalid reference");
+                    }
                 }
 
                 continue;
@@ -1374,7 +1488,7 @@ public class Parser {
             case "*", "/", "%" -> 9;
             case "**" -> 10;
             case "~", "!" -> 11;
-            case "->" -> 12;
+            case ":" -> 12;
             default -> -1;
         };
     }

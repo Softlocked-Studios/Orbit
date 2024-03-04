@@ -23,7 +23,8 @@ public enum OperationType {
     BITWISE_LEFT_SHIFT("<<"),
     BITWISE_RIGHT_SHIFT(">>"),
 
-    POWER("**");
+    POWER("**"),
+    REF(":");
 
     private final String symbol;
 

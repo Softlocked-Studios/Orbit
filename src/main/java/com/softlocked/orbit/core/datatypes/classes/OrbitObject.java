@@ -1,5 +1,6 @@
 package com.softlocked.orbit.core.datatypes.classes;
 
+import com.softlocked.orbit.core.ast.ASTNode;
 import com.softlocked.orbit.core.datatypes.Variable;
 import com.softlocked.orbit.core.datatypes.functions.IFunction;
 import com.softlocked.orbit.memory.ILocalContext;
@@ -20,8 +21,10 @@ public class OrbitObject {
         this.rootContext = rootContext;
         this.clazz = clazz;
 
+        LocalContext context = new LocalContext(rootContext);
         for (String field : clazz.getFields().keySet()) {
-            fields.put(field, new Variable(clazz.getFields().get(field), null));
+            Pair<Variable.Type, ASTNode> fieldData = clazz.getFields().get(field);
+            fields.put(field, new Variable(fieldData.first, fieldData.second.evaluate(context)));
         }
 
         fields.put("this", new Variable(Variable.Type.CLASS, this));
@@ -34,14 +37,12 @@ public class OrbitObject {
             }
 
             if (constructors.containsKey(args.size())) {
-                LocalContext context = new LocalContext(rootContext);
-
                 // Add the fields to the context
                 for (String field : fields.keySet()) {
                     context.addVariable(field, fields.get(field));
                 }
 
-                constructors.get(args.size()).call(new LocalContext(rootContext), args);
+                constructors.get(args.size()).call(new LocalContext(context), args);
             } else {
                 throw new RuntimeException("No constructor found for " + clazz.getName() + " with " + args.size() + " arguments");
             }
@@ -67,7 +68,9 @@ public class OrbitObject {
     public Object callFunction(String name, List<Object> args) {
         HashMap<Pair<String, Integer>, IFunction> functions = clazz.getFunctions();
 
-        if (functions.containsKey(new Pair<>(name, args.size()))) {
+        IFunction func = functions.get(new Pair<>(name, args.size()));
+
+        if (func != null) {
             LocalContext context = new LocalContext(rootContext);
 
             // Add the fields to the context
@@ -75,10 +78,27 @@ public class OrbitObject {
                 context.addVariable(field, fields.get(field));
             }
 
-            return functions.get(new Pair<>(name, args.size())).call(context, args);
-        } else {
-            throw new RuntimeException("No function found for " + clazz.getName() + " with name " + name + " and " + args.size() + " arguments");
+            return func.call(context, args);
         }
+
+        if (clazz.getSuperClasses() != null) {
+            for (OrbitClass superClass : clazz.getSuperClasses()) {
+                func = superClass.getFunctions().get(new Pair<>(name, args.size()));
+
+                if (func != null) {
+                    LocalContext context = new LocalContext(rootContext);
+
+                    // Add the fields to the context
+                    for (String field : fields.keySet()) {
+                        context.addVariable(field, fields.get(field));
+                    }
+
+                    return func.call(context, args);
+                }
+            }
+        }
+
+        throw new RuntimeException("No function found for " + clazz.getName() + " with " + name + " and " + args.size() + " arguments");
     }
 
     @Override

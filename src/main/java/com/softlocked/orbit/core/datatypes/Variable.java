@@ -79,14 +79,14 @@ public class Variable {
         }
 
         public static Type fromJavaClass(Class<?> clazz) {
-            if (clazz == int.class) return INT;
-            else if (clazz == float.class) return FLOAT;
-            else if (clazz == double.class) return DOUBLE;
-            else if (clazz == long.class) return LONG;
-            else if (clazz == byte.class) return BYTE;
-            else if (clazz == short.class) return SHORT;
-            else if (clazz == char.class) return CHAR;
-            else if (clazz == boolean.class) return BOOL;
+            if (clazz == int.class || clazz == Integer.class) return INT;
+            else if (clazz == float.class || clazz == Float.class) return FLOAT;
+            else if (clazz == double.class || clazz == Double.class) return DOUBLE;
+            else if (clazz == long.class || clazz == Long.class) return LONG;
+            else if (clazz == byte.class || clazz == Byte.class) return BYTE;
+            else if (clazz == short.class || clazz == Short.class) return SHORT;
+            else if (clazz == char.class || clazz == Character.class) return CHAR;
+            else if (clazz == boolean.class || clazz == Boolean.class) return BOOL;
             else if (clazz == String.class) return STRING;
             else if (clazz == Object[].class) return ARRAY;
             else if (clazz == Object.class) return ANY;

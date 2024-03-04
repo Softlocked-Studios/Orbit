@@ -196,25 +196,25 @@ public class Utils {
     }
 
     public static Object newObject(Class<?> type) {
-        if(type == Integer.class) {
+        if(type == Integer.class || type == int.class) {
             return 0;
-        } else if(type == Float.class) {
+        } else if(type == Float.class || type == float.class) {
             return 0f;
-        } else if(type == Double.class) {
+        } else if(type == Double.class || type == double.class) {
             return 0d;
-        } else if(type == Long.class) {
+        } else if(type == Long.class || type == long.class) {
             return 0L;
-        } else if(type == Byte.class) {
+        } else if(type == Byte.class || type == byte.class) {
             return (byte) 0;
-        } else if(type == Character.class) {
+        } else if(type == Character.class || type == char.class) {
             return (char) 0;
-        } else if(type == Boolean.class) {
+        } else if(type == Boolean.class || type == boolean.class) {
             return false;
         } else if(type == String.class) {
             return "";
-        } else if(type == List.class) {
+        } else if(type == List.class || type == ArrayList.class) {
             return new ArrayList<>();
-        } else if(type == Map.class) {
+        } else if(type == Map.class || type == HashMap.class) {
             return new HashMap<>();
         } else {
             return null;
