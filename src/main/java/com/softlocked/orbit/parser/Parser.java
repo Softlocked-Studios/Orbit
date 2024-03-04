@@ -1291,8 +1291,6 @@ public class Parser {
                 continue;
             }
 
-            i = findNext(tokens, i, token);
-
             switch (token) {
                 case "(":
                 case "[":
@@ -1308,7 +1306,8 @@ public class Parser {
                     subExpression.removeIf(s -> s.equals("\n") || s.equals("\r"));
 
                     expression.add(token);
-                    expression.addAll(fetchExpression(subExpression, 0).first);
+                    Pair<List<String>, Integer> subExpressionResult = fetchExpression(subExpression, 0);
+                    expression.addAll(subExpressionResult.first);
                     expression.add(e);
 
                     i = getPair;
@@ -1342,6 +1341,7 @@ public class Parser {
 
         return new Pair<>(expression, i);
     }
+
 
     public static List<String> infixToPostfix(List<String> infix) {
         List<String> postfixExpression = new ArrayList<>();
@@ -1408,6 +1408,7 @@ public class Parser {
         while (!operatorStack.isEmpty()) {
             postfixExpression.add(operatorStack.pop());
         }
+
 
         return postfixExpression;
     }

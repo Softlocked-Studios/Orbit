@@ -16,6 +16,10 @@ public record ReferenceASTNode(ASTNode param, ASTNode function) implements ASTNo
     public Object evaluate(ILocalContext context) {
         Object left = param.evaluate(context);
 
+        if(left == null) {
+            throw new RuntimeException("Cannot reference null");
+        }
+
         // Get the type of the left
         Variable.Type type = Variable.Type.fromJavaClass(left.getClass());
 

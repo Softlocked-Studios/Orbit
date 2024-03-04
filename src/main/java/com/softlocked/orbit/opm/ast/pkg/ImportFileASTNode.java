@@ -24,7 +24,7 @@ public record ImportFileASTNode(String fileName) implements ImportASTNode {
             String path = parentPath + "/" + fileName;
             globalContext.importFile(path);
         } catch (Exception e) {
-            throw new RuntimeException("Error while importing file " + fileName, e);
+            throw new RuntimeException("Error while importing file " + fileName + " (probably not found?)", e);
         }
     }
 }

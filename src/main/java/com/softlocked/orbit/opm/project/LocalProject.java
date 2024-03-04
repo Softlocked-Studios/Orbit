@@ -66,10 +66,10 @@ public class LocalProject {
 
             program.evaluate(context);
         } catch (ParsingException e) {
-            System.err.println("\u001B[31m[ERROR]\u001B[0m Failed to parse " + entrypoint);
+            System.err.println("\u001B[31m[ERROR]\u001B[0m Failed to parse " + pkg.entrypoint());
             System.out.println(e.getMessage());
         } catch (Exception e) {
-            System.err.println("\u001B[31m[ERROR]\u001B[0m Failed to run " + entrypoint);
+            System.err.println("\u001B[31m[ERROR]\u001B[0m Failed to run " + pkg.entrypoint());
             System.out.println(e.getMessage());
         }
     }

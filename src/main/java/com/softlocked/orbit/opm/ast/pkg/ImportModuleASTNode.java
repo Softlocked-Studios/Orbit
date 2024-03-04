@@ -48,7 +48,7 @@ public record ImportModuleASTNode(String moduleName) implements ImportASTNode {
 
             globalContext.importModule(ast, modulesFolder + File.separator + moduleName);
         } catch (Exception e) {
-            throw new RuntimeException("Error while importing module " + this.moduleName(), e);
+            throw new RuntimeException("Error while importing module " + this.moduleName() + " (probably not found?)", e);
         }
     }
 }
