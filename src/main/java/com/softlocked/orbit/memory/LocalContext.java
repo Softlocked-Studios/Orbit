@@ -1,0 +1,68 @@
+package com.softlocked.orbit.memory;
+
+import com.softlocked.orbit.core.datatypes.Variable;
+import com.softlocked.orbit.core.datatypes.functions.IFunction;
+
+import java.util.HashMap;
+
+/**
+ * Generic implementation of ILocalContext
+ * @see ILocalContext
+ */
+public class LocalContext implements ILocalContext {
+    protected final ILocalContext parent;
+    protected final ILocalContext root;
+
+    protected final HashMap<String, Variable> variables = new HashMap<>();
+
+    public LocalContext(ILocalContext parent) {
+        this.parent = parent;
+        this.root = parent.getRoot();
+    }
+
+    public LocalContext() {
+        this.parent = null;
+        this.root = this;
+    }
+
+    @Override
+    public void addVariable(String name, Variable value) {
+        variables.put(name, value);
+    }
+
+    @Override
+    public Variable getVariable(String name) {
+        Variable variable = variables.get(name);
+
+        if (variable != null) {
+            return variable;
+        } else {
+            if(parent != null) {
+                return parent.getVariable(name);
+            }
+            else {
+                return null;
+            }
+        }
+    }
+
+    @Override
+    public ILocalContext getParent() {
+        return parent;
+    }
+
+    @Override
+    public ILocalContext getRoot() {
+        return root;
+    }
+
+    @Override
+    public IFunction getFunction(String name, int parameterCount) {
+        return root.getFunction(name, parameterCount);
+    }
+
+    @Override
+    public void addFunction(IFunction function) {
+        root.addFunction(function);
+    }
+}

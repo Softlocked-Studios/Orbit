@@ -1,0 +1,142 @@
+package com.softlocked.orbit.core.datatypes;
+
+import com.softlocked.orbit.core.datatypes.classes.OrbitObject;
+
+import java.util.List;
+import java.util.Map;
+
+/**
+ * A simple class to hold a variable and its type
+ */
+public class Variable {
+    private Variable.Type type;
+    private Object value;
+
+    public Variable(Variable.Type type, Object value) {
+        this.type = type;
+        this.value = value;
+    }
+
+    public Variable.Type getType() {
+        return type;
+    }
+
+    public Object getValue() {
+        return value;
+    }
+
+    public void setValue(Object value) {
+        this.value = value;
+    }
+
+    public void setType(Variable.Type type) {
+        this.type = type;
+    }
+
+    @Override
+    public String toString() {
+        return "{" +
+                "type=" + getTypeName() +
+                ", value=" + value +
+                "}";
+    }
+
+    public enum Type {
+        INT,
+        FLOAT,
+        DOUBLE,
+        LONG,
+        BYTE,
+        SHORT,
+        CHAR,
+        BOOL,
+        STRING,
+        ARRAY,
+        ANY,
+        VOID,
+        CLASS,
+        LIST,
+        MAP;
+
+        public Class<?> getJavaClass() {
+            return switch (this) {
+                case INT -> int.class;
+                case FLOAT -> float.class;
+                case DOUBLE -> double.class;
+                case LONG -> long.class;
+                case BYTE -> byte.class;
+                case SHORT -> short.class;
+                case CHAR -> char.class;
+                case BOOL -> boolean.class;
+                case STRING -> String.class;
+                case ARRAY -> Object[].class;
+                case ANY -> Object.class;
+                case VOID -> void.class;
+                case CLASS -> OrbitObject.class;
+                case LIST -> java.util.List.class;
+                case MAP -> java.util.Map.class;
+            };
+        }
+
+        public static Type fromJavaClass(Class<?> clazz) {
+            if (clazz == int.class) return INT;
+            else if (clazz == float.class) return FLOAT;
+            else if (clazz == double.class) return DOUBLE;
+            else if (clazz == long.class) return LONG;
+            else if (clazz == byte.class) return BYTE;
+            else if (clazz == short.class) return SHORT;
+            else if (clazz == char.class) return CHAR;
+            else if (clazz == boolean.class) return BOOL;
+            else if (clazz == String.class) return STRING;
+            else if (clazz == Object[].class) return ARRAY;
+            else if (clazz == Object.class) return ANY;
+            else if (clazz == void.class) return VOID;
+            else if (clazz == OrbitObject.class) return CLASS;
+            else if (clazz == java.util.List.class) return LIST;
+            else if (clazz == java.util.Map.class) return MAP;
+            else return null;
+        }
+
+        public String getTypeName(Object value) {
+            if (value instanceof Integer) return "int";
+            else if (value instanceof Float) return "float";
+            else if (value instanceof Double) return "double";
+            else if (value instanceof Long) return "long";
+            else if (value instanceof Byte) return "byte";
+            else if (value instanceof Short) return "short";
+            else if (value instanceof Character) return "char";
+            else if (value instanceof Boolean) return "bool";
+            else if (value instanceof String) return "string";
+            else if (value instanceof Object[]) return "array";
+            else if (value instanceof List) return "list";
+            else if (value instanceof Map) return "map";
+            else if (value instanceof OrbitObject orbitObject) {
+                return orbitObject.getClazz().getName();
+            }
+            else return "var";
+        }
+    }
+
+    public String getTypeName() {
+        switch (type) {
+            case INT -> { return "int"; }
+            case FLOAT -> { return "float"; }
+            case DOUBLE -> { return "double"; }
+            case LONG -> { return "long"; }
+            case BYTE -> { return "byte"; }
+            case SHORT -> { return "short"; }
+            case CHAR -> { return "char"; }
+            case BOOL -> { return "bool"; }
+            case STRING -> { return "string"; }
+            case ARRAY -> { return "array"; }
+            case CLASS, ANY -> {
+                if (value instanceof OrbitObject) {
+                    return ((OrbitObject) value).getClazz().getName();
+                }
+                return "class";
+            }
+            case VOID -> { return "void"; }
+            default -> { return "var"; }
+        }
+    }
+}
