@@ -3,6 +3,7 @@ package com.softlocked.orbit.interpreter.memory;
 import com.softlocked.orbit.core.ast.ASTNode;
 import com.softlocked.orbit.core.datatypes.Variable;
 import com.softlocked.orbit.core.datatypes.classes.OrbitClass;
+import com.softlocked.orbit.core.datatypes.classes.OrbitObject;
 import com.softlocked.orbit.core.datatypes.functions.IFunction;
 import com.softlocked.orbit.core.exception.ParsingException;
 import com.softlocked.orbit.interpreter.function.NativeFunction;
@@ -60,6 +61,8 @@ public class GlobalContext extends LocalContext {
         primitives.put("let", Object.class);
         primitives.put("object", Object.class);
 
+        primitives.put("array", Object[].class);
+
         primitives.put("list", List.class);
         primitives.put("map", Map.class);
     }
@@ -92,6 +95,23 @@ public class GlobalContext extends LocalContext {
 
     public void addClass(OrbitClass orbitClass) {
         classes.put(orbitClass.getName(), orbitClass);
+
+        if(orbitClass.getConstructors().isEmpty()) {
+            addFunction(
+                    new NativeFunction(orbitClass.getName(), 0, Variable.Type.CLASS) {
+                        @Override
+                        public Object call(ILocalContext context, List<Object> args) {
+                            OrbitObject object = new OrbitObject(orbitClass, null, context.getRoot());
+
+                            return object;
+                        }
+                    }
+            );
+        } else {
+            for (Map.Entry<Integer, IFunction> entry : orbitClass.getConstructors().entrySet()) {
+                addFunction(entry.getValue());
+            }
+        }
     }
 
     public GlobalContext(String parentPath, String packagePath) {

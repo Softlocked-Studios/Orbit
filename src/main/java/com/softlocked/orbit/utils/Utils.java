@@ -3,10 +3,7 @@ package com.softlocked.orbit.utils;
 import com.google.gson.Gson;
 import com.softlocked.orbit.core.datatypes.classes.OrbitObject;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -175,6 +172,8 @@ public class Utils {
                 return gson.toJson(original);
             } else if(original instanceof OrbitObject b) {
                 return b.callFunction("cast", List.of("string"));
+            } else if(original instanceof Object[]) {
+                return Arrays.toString((Object[]) original);
             } else {
                 return original.toString();
             }
@@ -190,6 +189,19 @@ public class Utils {
             } else if(original instanceof OrbitObject b) {
                 return b.callFunction("cast", List.of("short"));
             }
+        }
+
+        else if (target.equals(Object[].class) && original instanceof List<?>) {
+            List<Object> list = (List<Object>) original;
+            Object[] array = new Object[list.size()];
+            for (int i = 0; i < list.size(); i++) {
+                array[i] = list.get(i);
+            }
+            return array;
+        } else if (target.equals(List.class) && original instanceof Object[]) {
+            List<Object> list = new ArrayList<>();
+            Collections.addAll(list, (Object[]) original);
+            return list;
         }
 
         throw new RuntimeException("Cannot cast " + original.getClass().getSimpleName() + " to " + target.getSimpleName() + "!");
@@ -216,6 +228,8 @@ public class Utils {
             return new ArrayList<>();
         } else if(type == Map.class || type == HashMap.class) {
             return new HashMap<>();
+        } else if(type == Object[].class) {
+            return new Object[0];
         } else {
             return null;
         }

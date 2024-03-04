@@ -12,7 +12,7 @@ public record BodyASTNode(List<ASTNode> statements) implements ASTNode {
         for (ASTNode node : statements) {
             Object result = node.evaluate(context);
 
-            if (result instanceof Breakpoint breakpoint) {
+            if (result instanceof Breakpoint) {
                 return result;
             }
         }

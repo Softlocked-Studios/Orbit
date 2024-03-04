@@ -3,6 +3,7 @@ package com.softlocked.orbit.core.datatypes.classes;
 import com.softlocked.orbit.core.ast.ASTNode;
 import com.softlocked.orbit.core.datatypes.Variable;
 import com.softlocked.orbit.core.datatypes.functions.IFunction;
+import com.softlocked.orbit.interpreter.memory.GlobalContext;
 import com.softlocked.orbit.memory.ILocalContext;
 import com.softlocked.orbit.memory.LocalContext;
 import com.softlocked.orbit.utils.Pair;
@@ -11,13 +12,13 @@ import java.util.HashMap;
 import java.util.List;
 
 public class OrbitObject {
-    private final ILocalContext rootContext;
+    private final GlobalContext rootContext;
 
     private final OrbitClass clazz;
 
     private final HashMap<String, Variable> fields = new HashMap<>();
 
-    public OrbitObject(OrbitClass clazz, List<Object> args, ILocalContext rootContext) {
+    public OrbitObject(OrbitClass clazz, List<Object> args, GlobalContext rootContext) {
         this.rootContext = rootContext;
         this.clazz = clazz;
 

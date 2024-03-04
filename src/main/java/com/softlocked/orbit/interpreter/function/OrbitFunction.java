@@ -3,6 +3,7 @@ package com.softlocked.orbit.interpreter.function;
 import com.softlocked.orbit.core.ast.ASTNode;
 import com.softlocked.orbit.core.datatypes.Variable;
 import com.softlocked.orbit.core.datatypes.functions.IFunction;
+import com.softlocked.orbit.core.evaluator.Breakpoint;
 import com.softlocked.orbit.memory.ILocalContext;
 import com.softlocked.orbit.utils.Pair;
 import com.softlocked.orbit.utils.Utils;
@@ -70,7 +71,23 @@ public class OrbitFunction implements IFunction {
             context.addVariable(this.args.get(i).first, new Variable(this.args.get(i).second, value));
         }
 
-        return body.evaluate(context);
+        Object result = body.evaluate(context);
+
+        if(result instanceof Breakpoint) {
+            return ((Breakpoint) result).getValue();
+        } else {
+            return result;
+        }
     }
 
+    @Override
+    public String toString() {
+        return "OrbitFunction{" +
+                "name='" + name + '\'' +
+                ", argsCount=" + argsCount +
+                ", returnType=" + returnType +
+                ", args=" + args +
+                ", body=" + body +
+                '}';
+    }
 }

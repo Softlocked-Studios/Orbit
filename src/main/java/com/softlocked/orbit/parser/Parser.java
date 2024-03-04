@@ -8,6 +8,7 @@ import com.softlocked.orbit.core.evaluator.Breakpoint;
 import com.softlocked.orbit.core.evaluator.Evaluator;
 import com.softlocked.orbit.core.exception.ParsingException;
 import com.softlocked.orbit.interpreter.ast.object.ClassDefinitionASTNode;
+import com.softlocked.orbit.interpreter.ast.object.DecObjASTNode;
 import com.softlocked.orbit.interpreter.ast.operation.ReferenceASTNode;
 import com.softlocked.orbit.interpreter.ast.value.ValueASTNode;
 import com.softlocked.orbit.interpreter.ast.value.VariableASTNode;
@@ -205,12 +206,11 @@ public class Parser {
                     throw new ParsingException("Unexpected end of file");
                 }
 
-                else if(!identifier.matches(Utils.IDENTIFIER_REGEX) || Utils.isKeyword(identifier)) {
+                else if(OperationType.fromSymbol(identifier) == null && (!identifier.matches(Utils.IDENTIFIER_REGEX) || Utils.isKeyword(identifier))) {
                     throw new ParsingException("Invalid identifier " + identifier);
                 }
 
                 if(identifierIndex < tokens.size()) {
-
                     String next = getNext(tokens, identifierIndex + 1);
                     int nextIndex = findNext(tokens, identifierIndex + 1, next);
 
@@ -283,7 +283,9 @@ public class Parser {
                                 if(subList.size() == 1) {
                                     arguments.add(new Pair<>(subList.get(0), Variable.Type.ANY));
                                 } else if(subList.size() == 2) {
-                                    arguments.add(new Pair<>(subList.get(1), Variable.Type.fromJavaClass(GlobalContext.getPrimitiveType(subList.get(0)))));
+                                    Variable.Type type = Variable.Type.fromJavaClass(GlobalContext.getPrimitiveType(subList.get(0)));
+                                    if(type == null) type = Variable.Type.CLASS;
+                                    arguments.add(new Pair<>(subList.get(1), type));
                                 } else {
                                     throw new ParsingException("Invalid function declaration");
                                 }
@@ -296,7 +298,9 @@ public class Parser {
                                 if(params.size() == 1) {
                                     arguments.add(new Pair<>(params.get(0), Variable.Type.ANY));
                                 } else if(params.size() == 2) {
-                                    arguments.add(new Pair<>(params.get(1), Variable.Type.fromJavaClass(GlobalContext.getPrimitiveType(params.get(0)))));
+                                    Variable.Type type = Variable.Type.fromJavaClass(GlobalContext.getPrimitiveType(params.get(0)));
+                                    if(type == null) type = Variable.Type.CLASS;
+                                    arguments.add(new Pair<>(params.get(1), type));
                                 } else {
                                     throw new ParsingException("Invalid function declaration");
                                 }
@@ -359,8 +363,145 @@ public class Parser {
                 }
             }
 
+            if(token.matches(Utils.IDENTIFIER_REGEX) && !Utils.isKeyword(token)) {
+                String identifier = getNext(tokens, i + 1);
+                int identifierIndex = findNext(tokens, i + 1, identifier);
+
+                if (identifier == null) {
+                    throw new ParsingException("Unexpected end of file");
+                }
+
+                if (OperationType.fromSymbol(identifier) != null || (identifier.matches(Utils.IDENTIFIER_REGEX) && !Utils.isKeyword(identifier))) {
+                    if (identifierIndex < tokens.size()) {
+                        String next = getNext(tokens, identifierIndex + 1);
+                        int nextIndex = findNext(tokens, identifierIndex + 1, next);
+
+                        if (next == null || next.equals(";")) {
+                            body.addNode(new DecObjASTNode(
+                                    identifier,
+                                    new ValueASTNode(null),
+                                    token
+                            ));
+
+                            i = next == null ? tokens.size() : nextIndex;
+
+                            continue;
+                        }
+
+                        switch (next) {
+                            case "=", "be" -> {
+                                Pair<List<String>, Integer> expression = fetchExpression(tokens, nextIndex + 1);
+
+                                List<String> postfix = infixToPostfix(expression.first);
+
+                                body.addNode(new DecObjASTNode(
+                                        identifier,
+                                        postfixToAST(postfix, context),
+                                        token
+                                ));
+
+                                i = expression.second;
+
+                                continue;
+                            }
+                            case "(" -> {
+                                // Function declaration
+                                int end = findNext(tokens, nextIndex, ")");
+
+                                List<String> params = tokens.subList(nextIndex + 1, end);
+
+                                List<Pair<String, Variable.Type>> arguments = new ArrayList<>();
+
+                                int nextComma = getNextSeparator(params, 0);
+
+                                while (nextComma != -1) {
+                                    List<String> subList = params.subList(0, nextComma);
+                                    if(subList.size() == 1) {
+                                        arguments.add(new Pair<>(subList.get(0), Variable.Type.ANY));
+                                    } else if(subList.size() == 2) {
+                                        Variable.Type type = Variable.Type.fromJavaClass(GlobalContext.getPrimitiveType(subList.get(0)));
+                                        if(type == null) type = Variable.Type.CLASS;
+                                        arguments.add(new Pair<>(subList.get(1), type));
+                                    } else {
+                                        throw new ParsingException("Invalid function declaration");
+                                    }
+
+                                    params = params.subList(nextComma + 1, params.size());
+                                    nextComma = getNextSeparator(params, 0);
+                                }
+
+                                if(!params.isEmpty()) {
+                                    if(params.size() == 1) {
+                                        arguments.add(new Pair<>(params.get(0), Variable.Type.ANY));
+                                    } else if(params.size() == 2) {
+                                        Variable.Type type = Variable.Type.fromJavaClass(GlobalContext.getPrimitiveType(params.get(0)));
+                                        if(type == null) type = Variable.Type.CLASS;
+                                        arguments.add(new Pair<>(params.get(1), type));
+                                    } else {
+                                        throw new ParsingException("Invalid function declaration");
+                                    }
+                                }
+
+                                String nextC = getNext(tokens, end + 1);
+                                int nextIndexC = findNext(tokens, end + 1, nextC);
+
+                                if(nextC == null) {
+                                    throw new ParsingException("Unexpected end of file");
+                                }
+
+                                int bodyEnd = 0;
+
+                                switch (nextC) {
+                                    case ";" -> {
+                                        body.addNode(new OrbitFunction(
+                                                identifier,
+                                                arguments.size(),
+                                                arguments,
+                                                new BodyASTNode(new ArrayList<>()),
+                                                Variable.Type.CLASS
+                                        ));
+
+                                        i = nextIndexC;
+
+                                        continue;
+                                    }
+                                    case "{"  -> {
+                                        bodyEnd = getBodyEnd(tokens, nextIndexC, "{");
+                                    }
+                                    case "does" -> {
+                                        bodyEnd = getBodyEnd(tokens, nextIndexC, "does", "do", "then");
+                                    }
+                                }
+
+                                if(bodyEnd == -1) {
+                                    throw new ParsingException("Unexpected end of file");
+                                } else if(bodyEnd == 0) {
+                                    throw new ParsingException("Invalid function body");
+                                }
+
+                                List<String> bodyTokens = tokens.subList(nextIndexC + 1, bodyEnd - 1);
+
+                                ASTNode functionBody = parse(bodyTokens, context);
+
+                                body.addNode(new OrbitFunction(
+                                        identifier,
+                                        arguments.size(),
+                                        arguments,
+                                        functionBody,
+                                        Variable.Type.CLASS
+                                ));
+
+                                i = bodyEnd - 1;
+
+                                continue;
+                            }
+                        }
+                    }
+                }
+            }
+
             // 2. Variable Assignment
-            else if(token.matches(Utils.IDENTIFIER_REGEX) && !Utils.isKeyword(token)) {
+            if(token.matches(Utils.IDENTIFIER_REGEX) && !Utils.isKeyword(token)) {
                 String next = getNext(tokens, i + 1);
                 int nextIndex = findNext(tokens, i + 1, next);
 
@@ -1099,8 +1240,6 @@ public class Parser {
         List<String> postfixExpression = new ArrayList<>();
         Stack<String> operatorStack = new Stack<>();
 
-        System.out.println("Infix: " + infix);
-
         for (int i = 0; i < infix.size(); i++) {
             String token = infix.get(i);
 
@@ -1162,8 +1301,6 @@ public class Parser {
         while (!operatorStack.isEmpty()) {
             postfixExpression.add(operatorStack.pop());
         }
-
-        System.out.println("Postfix: " + postfixExpression);
 
         return postfixExpression;
     }

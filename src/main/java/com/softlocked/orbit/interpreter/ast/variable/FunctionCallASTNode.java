@@ -26,10 +26,7 @@ public record FunctionCallASTNode(String name, List<ASTNode> args) implements AS
         Object result = function.call(localContext, evaluatedArgs);
 
         if(result instanceof Breakpoint breakpoint) {
-            if(breakpoint.getType() == Breakpoint.Type.RETURN) {
-                return breakpoint.getValue();
-            }
-            throw new RuntimeException("Undefined behavior. Attempted to use 'break' or 'continue' outside of a loop.");
+            return breakpoint.getValue();
         }
 
         return result;
