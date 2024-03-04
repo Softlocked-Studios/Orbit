@@ -79,7 +79,11 @@ public class Utils {
             return original;
         }
 
-        if(!(original instanceof OrbitObject) && target.isAssignableFrom(original.getClass())) {
+        if(!target.isAssignableFrom(original.getClass())) {
+            return original;
+        }
+
+        if(original instanceof OrbitObject && target.equals(OrbitObject.class)) {
             return original;
         }
 

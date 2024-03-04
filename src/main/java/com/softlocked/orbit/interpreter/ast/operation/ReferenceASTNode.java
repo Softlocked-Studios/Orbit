@@ -21,7 +21,7 @@ public record ReferenceASTNode(ASTNode param, ASTNode function) implements ASTNo
 
         // If the second is a function, composite the type string and the function name with a dot
         if(function instanceof FunctionCallASTNode functionCall) {
-            if(left instanceof OrbitObject orbitObject) {
+            if(left instanceof OrbitObject orbitObject && orbitObject.hasFunction(functionCall.name(), functionCall.args().size())) {
                 List<Object> args = new ArrayList<>();
                 for (ASTNode arg : functionCall.args()) {
                     args.add(arg.evaluate(context));

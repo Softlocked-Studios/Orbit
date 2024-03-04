@@ -103,6 +103,24 @@ public class OrbitObject {
         throw new RuntimeException("No function found for " + clazz.getName() + " with " + name + " and " + args.size() + " arguments");
     }
 
+    public boolean hasFunction(String name, int argsCount) {
+        HashMap<Pair<String, Integer>, IFunction> functions = clazz.getFunctions();
+
+        if (functions.containsKey(new Pair<>(name, argsCount))) {
+            return true;
+        }
+
+        if (clazz.getSuperClasses() != null) {
+            for (OrbitClass superClass : clazz.getSuperClasses()) {
+                if (superClass.getFunctions().containsKey(new Pair<>(name, argsCount))) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
     @Override
     public String toString() {
         return clazz.getName() + "(fields=" + fields + ")";

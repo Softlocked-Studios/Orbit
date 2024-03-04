@@ -142,6 +142,22 @@ public class GlobalContext extends LocalContext {
             }
         });
 
+        addFunction(new NativeFunction("typeof", 1, Variable.Type.STRING) {
+            @Override
+            public Object call(ILocalContext context, List<Object> args) {
+                Object obj = args.get(0);
+
+                if(obj == null) {
+                    return "null";
+                }
+
+                Variable.Type type = Variable.Type.fromJavaClass(obj.getClass());
+
+                assert type != null;
+                return type.getTypeName(obj);
+            }
+        });
+
         addFunction(new NativeFunction("system.load", List.of(Variable.Type.STRING), Variable.Type.VOID) {
             @Override
             public Object call(ILocalContext context, List<Object> args) {
