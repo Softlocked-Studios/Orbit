@@ -3,6 +3,7 @@ package com.softlocked.orbit.core.datatypes.classes;
 import com.softlocked.orbit.core.ast.ASTNode;
 import com.softlocked.orbit.core.datatypes.Variable;
 import com.softlocked.orbit.core.datatypes.functions.IFunction;
+import com.softlocked.orbit.interpreter.function.ClassConstructor;
 import com.softlocked.orbit.utils.Pair;
 
 import java.util.HashMap;
@@ -19,9 +20,9 @@ public class OrbitClass {
     private HashMap<String, Pair<Variable.Type, ASTNode>> fields;
     private HashMap<Pair<String, Integer>, IFunction> functions;
 
-    private HashMap<Integer, IFunction> constructors;
+    private HashMap<Integer, ClassConstructor> constructors;
 
-    public OrbitClass(String name, List<OrbitClass> superClasses, HashMap<String, Pair<Variable.Type, ASTNode>> fields, HashMap<Pair<String, Integer>, IFunction> functions, HashMap<Integer, IFunction> constructors) {
+    public OrbitClass(String name, List<OrbitClass> superClasses, HashMap<String, Pair<Variable.Type, ASTNode>> fields, HashMap<Pair<String, Integer>, IFunction> functions, HashMap<Integer, ClassConstructor> constructors) {
         this.name = name;
         this.superClasses = superClasses;
         this.fields = fields;
@@ -45,7 +46,7 @@ public class OrbitClass {
         return functions;
     }
 
-    public HashMap<Integer, IFunction> getConstructors() {
+    public HashMap<Integer, ClassConstructor> getConstructors() {
         return constructors;
     }
 
@@ -57,7 +58,7 @@ public class OrbitClass {
         this.functions = functions;
     }
 
-    public void setConstructors(HashMap<Integer, IFunction> constructors) {
+    public void setConstructors(HashMap<Integer, ClassConstructor> constructors) {
         this.constructors = constructors;
     }
 
@@ -69,7 +70,7 @@ public class OrbitClass {
         functions.put(new Pair<>(function.getName(), function.getParameterCount()), function);
     }
 
-    public void addConstructor(IFunction constructor) {
+    public void addConstructor(ClassConstructor constructor) {
         constructors.put(constructor.getParameterCount(), constructor);
     }
 }

@@ -3,6 +3,7 @@ package com.softlocked.orbit.core.datatypes.classes;
 import com.softlocked.orbit.core.ast.ASTNode;
 import com.softlocked.orbit.core.datatypes.Variable;
 import com.softlocked.orbit.core.datatypes.functions.IFunction;
+import com.softlocked.orbit.interpreter.function.ClassConstructor;
 import com.softlocked.orbit.interpreter.memory.GlobalContext;
 import com.softlocked.orbit.memory.ILocalContext;
 import com.softlocked.orbit.memory.LocalContext;
@@ -31,7 +32,7 @@ public class OrbitObject {
         fields.put("this", new Variable(Variable.Type.CLASS, this));
 
         if (args != null) {
-            HashMap<Integer, IFunction> constructors = clazz.getConstructors();
+            HashMap<Integer, ClassConstructor> constructors = clazz.getConstructors();
 
             if(constructors.isEmpty() && args.isEmpty()) {
                 return;

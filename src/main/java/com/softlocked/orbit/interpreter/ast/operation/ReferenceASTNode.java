@@ -42,9 +42,7 @@ public record ReferenceASTNode(ASTNode param, ASTNode function) implements ASTNo
                 return orbitObject.getField(variableASTNode.name()).getValue();
             }
 
-            String name = type.getTypeName(left) + "." + variableASTNode.name();
-
-            return context.getVariable(name).getValue();
+            throw new RuntimeException("Invalid operation");
         }
 
         throw new RuntimeException("Invalid operation");

@@ -12,6 +12,7 @@ import com.softlocked.orbit.interpreter.ast.object.DecObjASTNode;
 import com.softlocked.orbit.interpreter.ast.operation.ReferenceASTNode;
 import com.softlocked.orbit.interpreter.ast.value.ValueASTNode;
 import com.softlocked.orbit.interpreter.ast.value.VariableASTNode;
+import com.softlocked.orbit.interpreter.function.ClassConstructor;
 import com.softlocked.orbit.opm.ast.pkg.ImportFileASTNode;
 import com.softlocked.orbit.opm.ast.pkg.ImportModuleASTNode;
 import com.softlocked.orbit.utils.Pair;
@@ -161,11 +162,15 @@ public class Parser {
                 // If it's anything else, throw an error
                 HashMap<String, Pair<Variable.Type, ASTNode>> fields = new HashMap<>();
                 HashMap<Pair<String, Integer>, IFunction> functions = new HashMap<>();
+                HashMap<Integer, ClassConstructor> constructors = new HashMap<>();
 
                 if(bodyNode instanceof BodyASTNode bd) {
                     for(ASTNode node : bd.statements()) {
                         if(node instanceof DecVarASTNode decVarASTNode) {
                             fields.put(decVarASTNode.variableName(), new Pair<>(decVarASTNode.type(), decVarASTNode.value()));
+                        }
+                        else if(node instanceof ClassConstructor constructor) {
+                            constructors.put(constructor.getParameterCount(), constructor);
                         }
                         else if(node instanceof OrbitFunction function) {
                             functions.put(new Pair<>(function.getName(), function.getParameterCount()), function);
@@ -176,6 +181,9 @@ public class Parser {
                     }
                 } else if(bodyNode instanceof DecVarASTNode decVarASTNode) {
                     fields.put(decVarASTNode.variableName(), new Pair<>(decVarASTNode.type(), decVarASTNode.value()));
+                }
+                else if(bodyNode instanceof ClassConstructor constructor) {
+                    constructors.put(constructor.getParameterCount(), constructor);
                 }
                 else if(bodyNode instanceof OrbitFunction function) {
                     functions.put(new Pair<>(function.getName(), function.getParameterCount()), function);
@@ -189,7 +197,7 @@ public class Parser {
                         superClasses,
                         fields,
                         functions,
-                        new HashMap<>()
+                        constructors
                 );
 
                 body.addNode(classDef);
@@ -360,6 +368,101 @@ public class Parser {
                             continue;
                         }
                     }
+                }
+            }
+
+            if(token.matches(Utils.IDENTIFIER_REGEX) && !Utils.isKeyword(token)) {
+                String next = getNext(tokens, i + 1);
+                int nextIndex = findNext(tokens, i + 1, next);
+
+                String last = getLast(tokens, i - 1);
+
+                if(next != null && last != null && next.equals("(") && (last.equals("{") || last.equals("}"))) {
+                    // Constructor call
+                    int end = findNext(tokens, nextIndex, ")");
+
+                    List<String> params = tokens.subList(nextIndex + 1, end);
+
+                    List<Pair<String, Variable.Type>> arguments = new ArrayList<>();
+
+                    int nextComma = getNextSeparator(params, 0);
+
+                    while (nextComma != -1) {
+                        List<String> subList = params.subList(0, nextComma);
+                        if(subList.size() == 1) {
+                            arguments.add(new Pair<>(subList.get(0), Variable.Type.ANY));
+                        } else if(subList.size() == 2) {
+                            Variable.Type type = Variable.Type.fromJavaClass(GlobalContext.getPrimitiveType(subList.get(0)));
+                            if(type == null) type = Variable.Type.CLASS;
+                            arguments.add(new Pair<>(subList.get(1), type));
+                        } else {
+                            throw new ParsingException("Invalid function declaration");
+                        }
+
+                        params = params.subList(nextComma + 1, params.size());
+                        nextComma = getNextSeparator(params, 0);
+                    }
+
+                    if(!params.isEmpty()) {
+                        if(params.size() == 1) {
+                            arguments.add(new Pair<>(params.get(0), Variable.Type.ANY));
+                        } else if(params.size() == 2) {
+                            Variable.Type type = Variable.Type.fromJavaClass(GlobalContext.getPrimitiveType(params.get(0)));
+                            if(type == null) type = Variable.Type.CLASS;
+                            arguments.add(new Pair<>(params.get(1), type));
+                        } else {
+                            throw new ParsingException("Invalid function declaration");
+                        }
+                    }
+
+                    String nextC = getNext(tokens, end + 1);
+                    int nextIndexC = findNext(tokens, end + 1, nextC);
+
+                    if(nextC == null) {
+                        throw new ParsingException("Unexpected end of file");
+                    }
+
+                    int bodyEnd = 0;
+
+                    switch (nextC) {
+                        case ";" -> {
+                            body.addNode(new ClassConstructor(
+                                    arguments.size(),
+                                    arguments,
+                                    new BodyASTNode(new ArrayList<>())
+                            ));
+
+                            i = nextIndexC;
+
+                            continue;
+                        }
+                        case "{"  -> {
+                            bodyEnd = getBodyEnd(tokens, nextIndexC, "{");
+                        }
+                        case "does" -> {
+                            bodyEnd = getBodyEnd(tokens, nextIndexC, "does", "do", "then");
+                        }
+                    }
+
+                    if(bodyEnd == -1) {
+                        throw new ParsingException("Unexpected end of file");
+                    } else if(bodyEnd == 0) {
+                        throw new ParsingException("Invalid function body");
+                    }
+
+                    List<String> bodyTokens = tokens.subList(nextIndexC + 1, bodyEnd - 1);
+
+                    ASTNode functionBody = parse(bodyTokens, context);
+
+                    body.addNode(new ClassConstructor(
+                            arguments.size(),
+                            arguments,
+                            functionBody
+                    ));
+
+                    i = bodyEnd - 1;
+
+                    continue;
                 }
             }
 

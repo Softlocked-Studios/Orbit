@@ -6,6 +6,7 @@ import com.softlocked.orbit.core.datatypes.classes.OrbitClass;
 import com.softlocked.orbit.core.datatypes.classes.OrbitObject;
 import com.softlocked.orbit.core.datatypes.functions.IFunction;
 import com.softlocked.orbit.core.exception.ParsingException;
+import com.softlocked.orbit.interpreter.function.ClassConstructor;
 import com.softlocked.orbit.interpreter.function.NativeFunction;
 import com.softlocked.orbit.java.JarLoader;
 import com.softlocked.orbit.lexer.Lexer;
@@ -101,15 +102,21 @@ public class GlobalContext extends LocalContext {
                     new NativeFunction(orbitClass.getName(), 0, Variable.Type.CLASS) {
                         @Override
                         public Object call(ILocalContext context, List<Object> args) {
-                            OrbitObject object = new OrbitObject(orbitClass, null, context.getRoot());
-
-                            return object;
+                            return new OrbitObject(orbitClass, null, context.getRoot());
                         }
                     }
             );
         } else {
-            for (Map.Entry<Integer, IFunction> entry : orbitClass.getConstructors().entrySet()) {
-                addFunction(entry.getValue());
+            for (Map.Entry<Integer, ClassConstructor> entry : orbitClass.getConstructors().entrySet()) {
+                functions.put(
+                        new Pair<>(orbitClass.getName(), entry.getKey()),
+                        new NativeFunction(orbitClass.getName(), entry.getKey(), Variable.Type.CLASS) {
+                            @Override
+                            public Object call(ILocalContext context, List<Object> args) {
+                                return new OrbitObject(orbitClass, args, context.getRoot());
+                            }
+                        }
+                );
             }
         }
     }
