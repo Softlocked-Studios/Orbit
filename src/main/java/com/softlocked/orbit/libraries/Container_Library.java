@@ -5,6 +5,7 @@ import com.softlocked.orbit.interpreter.function.NativeFunction;
 import com.softlocked.orbit.interpreter.memory.GlobalContext;
 import com.softlocked.orbit.java.OrbitJavaLibrary;
 import com.softlocked.orbit.memory.ILocalContext;
+import com.softlocked.orbit.utils.CountingList;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -341,7 +342,21 @@ public class Container_Library implements OrbitJavaLibrary {
         context.addFunction(new NativeFunction("countingRange", List.of(Variable.Type.INT), Variable.Type.LIST) {
             @Override
             public Object call(ILocalContext context, List<Object> args) {
-                return java.util.stream.IntStream.iterate(0, i -> i + 1).limit((int) args.get(0)).boxed().toList();
+                return new CountingList<Integer>(0, (int) args.get(0));
+            }
+        });
+
+        context.addFunction(new NativeFunction("countingRange", List.of(Variable.Type.INT, Variable.Type.INT), Variable.Type.LIST) {
+            @Override
+            public Object call(ILocalContext context, List<Object> args) {
+                return new CountingList<Integer>((int) args.get(0), (int) args.get(1));
+            }
+        });
+
+        context.addFunction(new NativeFunction("countingRange", List.of(Variable.Type.INT, Variable.Type.INT, Variable.Type.INT), Variable.Type.LIST) {
+            @Override
+            public Object call(ILocalContext context, List<Object> args) {
+                return new CountingList<Integer>((int) args.get(0), (int) args.get(1), (int) args.get(2));
             }
         });
     }
