@@ -1,6 +1,7 @@
 package com.softlocked.orbit.utils;
 
 import com.google.gson.Gson;
+import com.softlocked.orbit.core.datatypes.Variable;
 import com.softlocked.orbit.core.datatypes.classes.OrbitObject;
 
 import java.util.*;
@@ -82,6 +83,10 @@ public class Utils {
 
         if(target.isAssignableFrom(original.getClass())) {
             return original;
+        }
+
+        if(target.equals(Variable.class)) {
+            return new Variable(Variable.Type.fromJavaClass(original.getClass()), original);
         }
 
         if(original instanceof OrbitObject && target.equals(OrbitObject.class)) {
@@ -241,6 +246,8 @@ public class Utils {
             return new ArrayList<>();
         } else if(type == Map.class || type == HashMap.class) {
             return new HashMap<>();
+        } else if(type == Variable.class) {
+            return new Variable(Variable.Type.ANY, null);
         } else if(type == Object[].class) {
             return new Object[0];
         } else {

@@ -37,10 +37,7 @@ public class Variable {
 
     @Override
     public String toString() {
-        return "{" +
-                "type=" + getTypeName() +
-                ", value=" + value +
-                "}";
+        return "reference(" + value + ")";
     }
 
     public enum Type {
@@ -58,7 +55,8 @@ public class Variable {
         VOID,
         CLASS,
         LIST,
-        MAP;
+        MAP,
+        REFERENCE;
 
         public Class<?> getJavaClass() {
             return switch (this) {
@@ -77,6 +75,7 @@ public class Variable {
                 case CLASS -> OrbitObject.class;
                 case LIST -> java.util.List.class;
                 case MAP -> java.util.Map.class;
+                case REFERENCE -> Variable.class;
             };
         }
 
@@ -95,6 +94,7 @@ public class Variable {
             else if (clazz == OrbitObject.class) return CLASS;
             else if (clazz == java.util.List.class || clazz == ArrayList.class) return LIST;
             else if (clazz == java.util.Map.class || clazz == HashMap.class) return MAP;
+            else if (clazz == Variable.class) return REFERENCE;
             // arrays
             else if (clazz.isArray()) return ARRAY;
             else return null;
@@ -114,6 +114,7 @@ public class Variable {
             else if (value instanceof Object[]) return "array";
             else if (value instanceof List) return "list";
             else if (value instanceof Map) return "map";
+            else if (value instanceof Variable) return "ref";
             else if (value instanceof OrbitObject orbitObject) {
                 return orbitObject.getClazz().getName();
             }
@@ -139,6 +140,9 @@ public class Variable {
                 }
                 return "class";
             }
+            case LIST -> { return "list"; }
+            case MAP -> { return "map"; }
+            case REFERENCE -> { return "ref"; }
             case VOID -> { return "void"; }
             default -> { return "var"; }
         }

@@ -8,9 +8,10 @@ import com.softlocked.orbit.memory.ILocalContext;
 
 import java.util.List;
 
-public class String_Library implements OrbitJavaLibrary {
+public class Types_Library implements OrbitJavaLibrary {
     @Override
     public void load(GlobalContext context) {
+        // string type
         context.addFunction(new NativeFunction("string.length", List.of(Variable.Type.STRING), Variable.Type.INT) {
             @Override
             public Object call(ILocalContext context, List<Object> args) {
@@ -134,6 +135,61 @@ public class String_Library implements OrbitJavaLibrary {
             @Override
             public Object call(ILocalContext context, List<Object> args) {
                 return ((String) args.get(0)).matches((String) args.get(1));
+            }
+        });
+
+        // ref type
+        context.addFunction(new NativeFunction("ref.get", List.of(Variable.Type.REFERENCE), Variable.Type.ANY) {
+            @Override
+            public Object call(ILocalContext context, List<Object> args) {
+                return ((Variable) args.get(0)).getValue();
+            }
+        });
+
+        context.addFunction(new NativeFunction("ref.set", List.of(Variable.Type.REFERENCE, Variable.Type.ANY), Variable.Type.VOID) {
+            @Override
+            public Object call(ILocalContext context, List<Object> args) {
+                ((Variable) args.get(0)).setValue(args.get(1));
+                return null;
+            }
+        });
+
+        context.addFunction(new NativeFunction("ref.type", List.of(Variable.Type.REFERENCE), Variable.Type.STRING) {
+            @Override
+            public Object call(ILocalContext context, List<Object> args) {
+                Variable ref = (Variable) args.get(0);
+
+                return ref.getType().getTypeName(ref.getValue());
+            }
+        });
+
+        context.addFunction(new NativeFunction("ref.pointer", List.of(Variable.Type.REFERENCE), Variable.Type.REFERENCE) {
+            @Override
+            public Object call(ILocalContext context, List<Object> args) {
+                Variable ref = (Variable) args.get(0);
+                Object value = ref.getValue();
+
+                while(value instanceof Variable) {
+                    value = ((Variable) value).getValue();
+                }
+
+                return value;
+            }
+        });
+
+        context.addFunction(new NativeFunction("ref.ref", List.of(Variable.Type.REFERENCE, Variable.Type.REFERENCE), Variable.Type.VOID) {
+            @Override
+            public Object call(ILocalContext context, List<Object> args) {
+                ((Variable) args.get(0)).setValue(args.get(1));
+                return null;
+            }
+        });
+
+        context.addFunction(new NativeFunction("ref.deref", List.of(Variable.Type.REFERENCE), Variable.Type.VOID) {
+            @Override
+            public Object call(ILocalContext context, List<Object> args) {
+                ((Variable) args.get(0)).setValue(null);
+                return null;
             }
         });
     }

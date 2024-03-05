@@ -8,7 +8,6 @@ import com.softlocked.orbit.core.datatypes.functions.IFunction;
 import com.softlocked.orbit.core.exception.ParsingException;
 import com.softlocked.orbit.interpreter.function.ClassConstructor;
 import com.softlocked.orbit.interpreter.function.NativeFunction;
-import com.softlocked.orbit.java.JarLoader;
 import com.softlocked.orbit.java.OrbitJavaLibrary;
 import com.softlocked.orbit.lexer.Lexer;
 import com.softlocked.orbit.libraries.*;
@@ -20,9 +19,6 @@ import com.softlocked.orbit.parser.Parser;
 import com.softlocked.orbit.utils.Pair;
 import com.softlocked.orbit.interpreter.ast.generic.BodyASTNode;
 import com.softlocked.orbit.interpreter.ast.generic.ImportASTNode;
-import com.softlocked.orbit.interpreter.ast.object.ClassDefinitionASTNode;
-import com.softlocked.orbit.interpreter.ast.variable.DecVarASTNode;
-import com.softlocked.orbit.utils.Utils;
 
 import java.io.File;
 import java.io.IOException;
@@ -71,10 +67,13 @@ public class GlobalContext extends LocalContext {
         primitives.put("list", List.class);
         primitives.put("map", Map.class);
 
+        primitives.put("ref", Variable.class);
+        primitives.put("reference", Variable.class);
+
         builtInLibraries.add(new Standard_Library());
         builtInLibraries.add(new Container_Library());
         builtInLibraries.add(new Time_Library());
-        builtInLibraries.add(new String_Library());
+        builtInLibraries.add(new Types_Library());
         builtInLibraries.add(new Math_Library());
         builtInLibraries.add(new Eval_Library());
     }
