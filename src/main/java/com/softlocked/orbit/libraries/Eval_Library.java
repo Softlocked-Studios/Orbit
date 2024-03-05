@@ -18,7 +18,7 @@ public class Eval_Library implements OrbitJavaLibrary {
         context.addFunction(new NativeFunction("delete", List.of(Variable.Type.STRING), Variable.Type.VOID) {
             @Override
             public Object call(ILocalContext context, List<Object> args) {
-                context.removeVariable((String) args.get(0));
+                context.getParent().removeVariable((String) args.get(0));
 
                 return null;
             }
@@ -55,15 +55,15 @@ public class Eval_Library implements OrbitJavaLibrary {
 
                     ASTNode program = Parser.parse(tokens, context.getRoot());
 
-                    Object result = program.evaluate(context);
+                    Object result = program.evaluate(context.getParent());
 
-                    if(result instanceof Variable var) {
-                        return var.getValue();
+                    if(result instanceof Variable) {
+                        return null;
                     } else {
                         return result;
                     }
                 } catch (Throwable e) {
-                    throw new RuntimeException(e);
+                    throw new RuntimeException(e.getMessage());
                 }
             }
         });
