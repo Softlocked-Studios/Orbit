@@ -16,7 +16,7 @@ public record BodyASTNode(List<ASTNode> statements) implements ASTNode {
                 return result;
             }
         }
-        return Void.TYPE;
+        return null;
     }
 
     public void addNode(ASTNode node) {

@@ -26,7 +26,8 @@ public class Lexer {
         this.input = input;
 
         p = 0;
-        c = input.charAt(p);
+        if(!input.isEmpty())
+            c = input.charAt(p);
 
         tokens.clear();
     }

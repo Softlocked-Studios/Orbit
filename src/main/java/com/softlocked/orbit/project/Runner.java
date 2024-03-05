@@ -1,4 +1,4 @@
-package com.softlocked.orbit.opm.project;
+package com.softlocked.orbit.project;
 
 /**
  * Generic interface for running a project. Used in both modules and REPL mode.

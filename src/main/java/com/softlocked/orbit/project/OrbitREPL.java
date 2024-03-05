@@ -1,4 +1,4 @@
-package com.softlocked.orbit.opm.project;
+package com.softlocked.orbit.project;
 
 import com.softlocked.orbit.core.ast.ASTNode;
 import com.softlocked.orbit.core.datatypes.Variable;
