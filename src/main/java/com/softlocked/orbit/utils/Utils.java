@@ -16,7 +16,8 @@ public class Utils {
     public static final String NUMBER_REGEX = "-?\\d+(\\.\\d+)?";
 
     private static final List<String> keywords = List.of(
-            "if", "else", "while", "for", "return", "break", "continue", "class", "null", "true", "false", "this", "switch", "case", "import"
+            "if", "else", "while", "for", "return", "break", "continue", "class", "null", "true", "false", "this", "switch", "case",
+            "import", "module", "super"
     );
 
     public static boolean isKeyword(String word) {
