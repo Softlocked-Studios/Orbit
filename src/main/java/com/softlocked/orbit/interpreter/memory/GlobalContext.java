@@ -76,6 +76,7 @@ public class GlobalContext extends LocalContext {
         builtInLibraries.add(new Time_Library());
         builtInLibraries.add(new String_Library());
         builtInLibraries.add(new Math_Library());
+        builtInLibraries.add(new Eval_Library());
     }
 
     public static Class<?> getPrimitiveType(String name) {
@@ -102,6 +103,14 @@ public class GlobalContext extends LocalContext {
     @Override
     public void addFunction(IFunction function) {
         functions.put(new Pair<>(function.getName(), function.getParameterCount()), function);
+    }
+
+    public void removeFunction(String name, int parameterCount) {
+        functions.remove(new Pair<>(name, parameterCount));
+    }
+
+    public void removeClass(String name) {
+        classes.remove(name);
     }
 
     public void addClass(OrbitClass orbitClass) {

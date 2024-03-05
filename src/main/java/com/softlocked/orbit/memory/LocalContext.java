@@ -48,6 +48,15 @@ public class LocalContext implements ILocalContext {
     }
 
     @Override
+    public void removeVariable(String name) {
+        Variable variable = variables.remove(name);
+
+        if (variable == null && parent != null) {
+            parent.removeVariable(name);
+        }
+    }
+
+    @Override
     public ILocalContext getParent() {
         return parent;
     }

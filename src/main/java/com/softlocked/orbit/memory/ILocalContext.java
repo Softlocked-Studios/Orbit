@@ -12,6 +12,8 @@ public interface ILocalContext {
 
     Variable getVariable(String name);
 
+    void removeVariable(String name);
+
     ILocalContext getParent();
 
     GlobalContext getRoot();
