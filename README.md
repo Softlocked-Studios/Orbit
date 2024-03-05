@@ -3,6 +3,8 @@ Orbit is a multi-paradigm programming language that is interpreted and built on 
 
 Orbit has a unique approach to it's syntax, offering a diverse range of options to accommodate different programming styles and preferences. For example, Orbit draws inspiration from languages like C, Lua, JavaScript, and Python. Whether you would like a traditional C-like syntax with braces and semicolons or embracing more expressive alternatives such as the usage of keywords like "then" and "end", Orbit has them both, and much more.
 
+Orbit is great at repetitive tasks, such as loops, but is a bit slower at functional tasks, especially if recursivity is involved.
+
 ## Features
 - Multi-Paradigm: Orbit supports imperative, functional, and object-oriented programming paradigms, allowing developers to choose the style that best suits their needs.
 - Diverse Syntax: As already stated, developers have the freedom to write code in a manner that best suits their individual preferences.
