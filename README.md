@@ -10,7 +10,29 @@ Orbit has a unique approach to it's syntax, offering a diverse range of options 
 - Garbage Collection: Due to being built on Java, Orbit also employs automatic memory management through garbage collection.
 - Extensible: Orbit additionally allows developers to directly load java libraries into it's programs.
 
-## The Orbit Package Manager
-Although, as of speaking, it is highly experimental, Orbit also features it's own package manager and module system.
+## How to Run
+The following should be used as arguments for when running the jar.
+Example:
+```sh
+java -jar Orbit.jar opkg init
+```
 
-Currently, this serves no real use, due to the fact that there aren't any repositories or many libraries in the first place, but we hope to further develop it.
+## Running the Orbit REPL
+To run the Orbit REPL (Read-Eval-Print Loop):
+```sh
+orbit
+```
+
+### Using the Orbit Package Manager (opkg)
+To utilize the Orbit Package Manager (opkg) for managing packages and projects:
+1. Initialization: (Will create a `metadata.yml` file in the working directory)
+```sh
+opkg init
+```
+2. Running: (Will directly run the code from the entrypoint)
+```sh
+opkg run
+```
+
+### Modules
+As of speaking, there are no repositories for Orbit. If you wish to use any sort of dependencies, you will need to manually add them under: `projectDir/modules/{name}`
