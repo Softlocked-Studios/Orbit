@@ -84,6 +84,8 @@ public record OperationASTNode(ASTNode left, ASTNode right, OperationType type) 
                 }
                 default -> throw new RuntimeException("Unknown operation type: " + this.type());
             }
+        } catch (RuntimeException e) {
+            throw e;
         } catch (Exception e) {
             throw new RuntimeException("Error while evaluating operation", e);
         }

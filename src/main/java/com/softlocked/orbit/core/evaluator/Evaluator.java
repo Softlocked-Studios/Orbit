@@ -233,6 +233,11 @@ public class Evaluator {
             return false;
         }
         if(!(a instanceof OrbitObject)) {
+            // strings
+            if(a instanceof String || b instanceof String) {
+                return a.toString().equals(b.toString());
+            }
+
             int priority = Utils.getPriority(a.getClass(), b.getClass());
 
             switch (priority) {
@@ -274,6 +279,11 @@ public class Evaluator {
             return true;
         }
         if(!(a instanceof OrbitObject)) {
+            // strings
+            if(a instanceof String || b instanceof String) {
+                return !a.toString().equals(b.toString());
+            }
+
             int priority = Utils.getPriority(a.getClass(), b.getClass());
 
             switch (priority) {

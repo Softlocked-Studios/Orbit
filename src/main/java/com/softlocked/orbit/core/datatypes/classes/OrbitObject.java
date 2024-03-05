@@ -100,7 +100,7 @@ public class OrbitObject {
             }
         }
 
-        throw new RuntimeException("No function found for " + clazz.getName() + " with " + name + " and " + args.size() + " arguments");
+        throw new RuntimeException("No function " + clazz.getName() + ":" + name + " with " + args.size() + " arguments found");
     }
 
     public boolean hasFunction(String name, int argsCount) {
