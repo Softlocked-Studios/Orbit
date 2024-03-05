@@ -12,6 +12,7 @@ import com.softlocked.orbit.interpreter.ast.object.DecObjASTNode;
 import com.softlocked.orbit.interpreter.ast.operation.ReferenceASTNode;
 import com.softlocked.orbit.interpreter.ast.value.ValueASTNode;
 import com.softlocked.orbit.interpreter.ast.value.VariableASTNode;
+import com.softlocked.orbit.interpreter.ast.variable.DeleteVarASTNode;
 import com.softlocked.orbit.interpreter.function.ClassConstructor;
 import com.softlocked.orbit.opm.ast.pkg.ImportFileASTNode;
 import com.softlocked.orbit.opm.ast.pkg.ImportModuleASTNode;
@@ -83,26 +84,37 @@ public class Parser {
                     continue;
                 }
                 else {
-                    Pair<List<String>, Integer> expression = fetchExpression(tokens, nextIndex);
-
-                    if(expression.first.size() != 1) {
-                        throw new ParsingException("Invalid file name");
-                    }
-
-                    String fileName = expression.first.get(0);
-
-                    if(fileName.startsWith("\"") && fileName.endsWith("\"")) {
-                        fileName = fileName.substring(1, fileName.length() - 1);
+                    if(next.startsWith("\"") && next.endsWith("\"")) {
+                        next = next.substring(1, next.length() - 1);
                     }
 
                     body.addNode(new ImportFileASTNode(
-                            fileName
+                            next
                     ));
 
-                    i = expression.second;
+                    i = nextIndex;
 
                     continue;
                 }
+            }
+
+            else if (token.equals("delete")) {
+                String next = getNext(tokens, i + 1);
+                int nextIndex = findNext(tokens, i + 1, next);
+
+                if(next == null) {
+                    throw new ParsingException("Unexpected end of file");
+                }
+
+                if(next.startsWith("\"") && next.endsWith("\"")) {
+                    next = next.substring(1, next.length() - 1);
+                }
+
+                body.addNode(new DeleteVarASTNode(next));
+
+                i = nextIndex;
+
+                continue;
             }
 
             else if (token.equals("class")) {

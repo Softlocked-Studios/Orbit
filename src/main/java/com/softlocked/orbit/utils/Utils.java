@@ -85,6 +85,10 @@ public class Utils {
             return original;
         }
 
+        if(original instanceof Variable && target.equals(Variable.class)) {
+            return original;
+        }
+
         if(target.equals(Variable.class)) {
             return new Variable(Variable.Type.fromJavaClass(original.getClass()), original);
         }

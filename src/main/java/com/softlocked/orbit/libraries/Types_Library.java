@@ -5,7 +5,6 @@ import com.softlocked.orbit.interpreter.function.NativeFunction;
 import com.softlocked.orbit.interpreter.memory.GlobalContext;
 import com.softlocked.orbit.java.OrbitJavaLibrary;
 import com.softlocked.orbit.memory.ILocalContext;
-
 import java.util.List;
 
 public class Types_Library implements OrbitJavaLibrary {
@@ -190,6 +189,22 @@ public class Types_Library implements OrbitJavaLibrary {
             public Object call(ILocalContext context, List<Object> args) {
                 ((Variable) args.get(0)).setValue(null);
                 return null;
+            }
+        });
+
+        context.addFunction(new NativeFunction("ref.address", List.of(Variable.Type.REFERENCE), Variable.Type.LONG) {
+            @Override
+            public Object call(ILocalContext context, List<Object> args) {
+                Variable ref = (Variable) args.get(0);
+                return System.identityHashCode(ref);
+            }
+        });
+
+        context.addFunction(new NativeFunction("ref.hexAddress", List.of(Variable.Type.REFERENCE), Variable.Type.STRING) {
+            @Override
+            public Object call(ILocalContext context, List<Object> args) {
+                Variable ref = (Variable) args.get(0);
+                return "0x" + Long.toHexString(System.identityHashCode(ref));
             }
         });
     }
