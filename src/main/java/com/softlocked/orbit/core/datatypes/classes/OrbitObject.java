@@ -59,18 +59,18 @@ public class OrbitObject {
         return fields.get(name);
     }
 
-    public void setField(String name, Variable value) {
-        fields.put(name, value);
-    }
-
-    public HashMap<String, Variable> getFields() {
-        return fields;
-    }
-
     public Object callFunction(String name, List<Object> args) {
+        return callFunction(name, args, false);
+    }
+
+    public Object callFunction(String name, List<Object> args, boolean superCall) {
         HashMap<Pair<String, Integer>, IFunction> functions = clazz.getFunctions();
 
-        IFunction func = functions.get(new Pair<>(name, args.size()));
+        IFunction func = null;
+
+        if(!superCall) {
+            func = functions.get(new Pair<>(name, args.size()));
+        }
 
         if (func != null) {
             LocalContext context = new LocalContext(rootContext);

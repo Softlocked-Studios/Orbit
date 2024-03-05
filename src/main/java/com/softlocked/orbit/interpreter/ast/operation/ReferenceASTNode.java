@@ -14,7 +14,13 @@ import java.util.List;
 public record ReferenceASTNode(ASTNode param, ASTNode function) implements ASTNode {
     @Override
     public Object evaluate(ILocalContext context) {
-        Object left = param.evaluate(context);
+        Object left; boolean superCall = false;
+
+        if(param instanceof VariableASTNode variableASTNode && variableASTNode.name().equals("super")) {
+            left = context.getVariable("this").getValue();
+            superCall = true;
+        }
+        else left = param.evaluate(context);
 
         if(left == null) {
             throw new RuntimeException("Cannot reference null");
@@ -30,7 +36,7 @@ public record ReferenceASTNode(ASTNode param, ASTNode function) implements ASTNo
                 for (ASTNode arg : functionCall.args()) {
                     args.add(arg.evaluate(context));
                 }
-                return orbitObject.callFunction(functionCall.name(), args);
+                return orbitObject.callFunction(functionCall.name(), args, superCall);
             }
 
             String name = type.getTypeName(left) + "." + functionCall.name();
