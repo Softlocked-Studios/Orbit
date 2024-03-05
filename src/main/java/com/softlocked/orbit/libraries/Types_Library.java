@@ -192,19 +192,29 @@ public class Types_Library implements OrbitJavaLibrary {
             }
         });
 
-        context.addFunction(new NativeFunction("ref.address", List.of(Variable.Type.REFERENCE), Variable.Type.LONG) {
+        context.addFunction(new NativeFunction("ref.identity", List.of(Variable.Type.REFERENCE), Variable.Type.INT) {
             @Override
             public Object call(ILocalContext context, List<Object> args) {
                 Variable ref = (Variable) args.get(0);
-                return System.identityHashCode(ref);
+                Object value = ref.getValue();
+                while(value instanceof Variable) {
+                    value = ((Variable) value).getValue();
+                }
+
+                return System.identityHashCode(value);
             }
         });
 
-        context.addFunction(new NativeFunction("ref.hexAddress", List.of(Variable.Type.REFERENCE), Variable.Type.STRING) {
+        context.addFunction(new NativeFunction("ref.hexIdentity", List.of(Variable.Type.REFERENCE), Variable.Type.STRING) {
             @Override
             public Object call(ILocalContext context, List<Object> args) {
                 Variable ref = (Variable) args.get(0);
-                return "0x" + Long.toHexString(System.identityHashCode(ref));
+                Object value = ref.getValue();
+                while(value instanceof Variable) {
+                    value = ((Variable) value).getValue();
+                }
+
+                return Integer.toHexString(System.identityHashCode(value));
             }
         });
     }
