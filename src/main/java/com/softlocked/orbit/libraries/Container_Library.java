@@ -350,21 +350,21 @@ public class Container_Library implements OrbitJavaLibrary {
         context.addFunction(new NativeFunction("countingRange", List.of(Variable.Type.INT), Variable.Type.LIST) {
             @Override
             public Object call(ILocalContext context, List<Object> args) {
-                return new CountingList<Integer>(0, (int) args.get(0));
+                return new CountingList(0, (int) args.get(0));
             }
         });
 
         context.addFunction(new NativeFunction("countingRange", List.of(Variable.Type.INT, Variable.Type.INT), Variable.Type.LIST) {
             @Override
             public Object call(ILocalContext context, List<Object> args) {
-                return new CountingList<Integer>((int) args.get(0), (int) args.get(1));
+                return new CountingList((int) args.get(0), (int) args.get(1));
             }
         });
 
         context.addFunction(new NativeFunction("countingRange", List.of(Variable.Type.INT, Variable.Type.INT, Variable.Type.INT), Variable.Type.LIST) {
             @Override
             public Object call(ILocalContext context, List<Object> args) {
-                return new CountingList<Integer>((int) args.get(0), (int) args.get(1), (int) args.get(2));
+                return new CountingList((int) args.get(0), (int) args.get(1), (int) args.get(2));
             }
         });
     }

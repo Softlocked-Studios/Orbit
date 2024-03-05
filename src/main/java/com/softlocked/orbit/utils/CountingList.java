@@ -1,5 +1,6 @@
 package com.softlocked.orbit.utils;
 
+import java.util.AbstractList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
@@ -8,9 +9,8 @@ import java.util.ListIterator;
  * A list implementation that is specifically designed for iterating over numbers from n to m, with a step size.
  * This is not an actual list, but rather a virtual list that generates the numbers on the fly.
  * Very useful for iterating over numbers in a for-each loop, but elements cannot be added, removed or modified.
- * @param <E> Unused type parameter. This list only contains integers.
  */
-public class CountingList<E> implements List<E> {
+public class CountingList extends AbstractList<Integer> {
     int start;
     int end;
     int step;
@@ -53,7 +53,7 @@ public class CountingList<E> implements List<E> {
     }
 
     @Override
-    public Iterator<E> iterator() {
+    public Iterator<Integer> iterator() {
         return new Iterator<>() {
             int current = start;
 
@@ -63,10 +63,9 @@ public class CountingList<E> implements List<E> {
             }
 
             @Override
-            public E next() {
-                E e = (E) Integer.valueOf(current);
+            public Integer next() {
                 current += step;
-                return e;
+                return current - step;
             }
         };
     }
@@ -81,18 +80,7 @@ public class CountingList<E> implements List<E> {
     }
 
     @Override
-    public <T> T[] toArray(T[] a) {
-        if (a.length < size()) {
-            return (T[]) toArray();
-        }
-        for (int i = 0; i < size(); i++) {
-            a[i] = (T) Integer.valueOf(start + i * step);
-        }
-        return a;
-    }
-
-    @Override
-    public boolean add(E e) {
+    public boolean add(Integer integer) {
         throw new UnsupportedOperationException("Cannot add to a CountingList");
     }
 
@@ -112,12 +100,12 @@ public class CountingList<E> implements List<E> {
     }
 
     @Override
-    public boolean addAll(java.util.Collection<? extends E> c) {
+    public boolean addAll(java.util.Collection<? extends Integer> c) {
         throw new UnsupportedOperationException("Cannot add to a CountingList");
     }
 
     @Override
-    public boolean addAll(int index, java.util.Collection<? extends E> c) {
+    public boolean addAll(int index, java.util.Collection<? extends Integer> c) {
         throw new UnsupportedOperationException("Cannot add to a CountingList");
     }
 
@@ -137,25 +125,25 @@ public class CountingList<E> implements List<E> {
     }
 
     @Override
-    public E get(int index) {
+    public Integer get(int index) {
         if (index < 0 || index >= size()) {
             throw new IndexOutOfBoundsException("Index: " + index + ", Size: " + size());
         }
-        return (E) Integer.valueOf(start + index * step);
+        return start + index * step;
     }
 
     @Override
-    public E set(int index, E element) {
+    public Integer set(int index, Integer element) {
         throw new UnsupportedOperationException("Cannot set in a CountingList");
     }
 
     @Override
-    public void add(int index, E element) {
+    public void add(int index, Integer element) {
         throw new UnsupportedOperationException("Cannot add to a CountingList");
     }
 
     @Override
-    public E remove(int index) {
+    public Integer remove(int index) {
         throw new UnsupportedOperationException("Cannot remove from a CountingList");
     }
 
@@ -176,12 +164,12 @@ public class CountingList<E> implements List<E> {
     }
 
     @Override
-    public ListIterator<E> listIterator() {
+    public ListIterator<Integer> listIterator() {
         return listIterator(0);
     }
 
     @Override
-    public ListIterator<E> listIterator(int index) {
+    public ListIterator<Integer> listIterator(int index) {
         return new ListIterator<>() {
             int current = start + index * step;
 
@@ -191,10 +179,9 @@ public class CountingList<E> implements List<E> {
             }
 
             @Override
-            public E next() {
-                E e = (E) Integer.valueOf(current);
+            public Integer next() {
                 current += step;
-                return e;
+                return current - step;
             }
 
             @Override
@@ -203,10 +190,9 @@ public class CountingList<E> implements List<E> {
             }
 
             @Override
-            public E previous() {
-                E e = (E) Integer.valueOf(current);
+            public Integer previous() {
                 current -= step;
-                return e;
+                return current;
             }
 
             @Override
@@ -225,23 +211,23 @@ public class CountingList<E> implements List<E> {
             }
 
             @Override
-            public void set(E e) {
+            public void set(Integer integer) {
                 throw new UnsupportedOperationException("Cannot set in a CountingList");
             }
 
             @Override
-            public void add(E e) {
+            public void add(Integer integer) {
                 throw new UnsupportedOperationException("Cannot add to a CountingList");
             }
         };
     }
 
     @Override
-    public List<E> subList(int fromIndex, int toIndex) {
+    public List<Integer> subList(int fromIndex, int toIndex) {
         if (fromIndex < 0 || toIndex > size() || fromIndex > toIndex) {
             throw new IndexOutOfBoundsException("fromIndex: " + fromIndex + ", toIndex: " + toIndex + ", Size: " + size());
         }
-        return new CountingList<>(start + fromIndex * step, start + toIndex * step, step);
+        return new CountingList(start + fromIndex * step, start + toIndex * step, step);
     }
 
     @Override
