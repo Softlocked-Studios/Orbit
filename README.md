@@ -35,4 +35,4 @@ opkg run
 ```
 
 ### Modules
-As of speaking, there are no repositories for Orbit. If you wish to use any sort of dependencies, you will need to manually add them under: `projectDir/modules/{name}`
+As of speaking, there are no repositories for Orbit. If you wish to use any sort of dependencies, you will need to manually add them under `projectDir/modules/{name}` and must contain a `metadata.yml` file. (In the same format as when running `opkg init`)
