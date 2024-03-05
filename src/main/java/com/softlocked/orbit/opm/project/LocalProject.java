@@ -14,7 +14,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.List;
 
-public class LocalProject {
+public class LocalProject implements Runner {
     private final OrbitPackage pkg;
     private final String entrypoint; // Path to the entrypoint file, for easy access
     private final String packagePath; // Path to the package directory
@@ -51,25 +51,56 @@ public class LocalProject {
         return entrypoint;
     }
 
-    public void run() throws Exception {
-        install();
+    public void run() {
+        try {
+            install();
+        } catch (Exception | Error e) {
+            System.err.println("\u001B[31m[ERROR]\u001B[0m Failed to install dependencies for " + pkg.entrypoint());
+            System.out.println(e.getMessage());
+
+            return;
+        }
 
         GlobalContext context = new GlobalContext(new File(entrypoint).getParent(), packagePath);
 
-        byte[] mainFile = Files.readAllBytes(new File(entrypoint).toPath());
-        String mainCode = new String(mainFile);
-
         try {
-            List<String> tokens = new Lexer(mainCode).tokenize();
+            byte[] mainFile = Files.readAllBytes(new File(entrypoint).toPath());
+            String mainCode = new String(mainFile);
 
-            ASTNode program = Parser.parse(tokens, context);
+            try {
+                List<String> tokens = new Lexer(mainCode).tokenize();
 
-            program.evaluate(context);
-        } catch (ParsingException e) {
-            System.err.println("\u001B[31m[ERROR]\u001B[0m Failed to parse " + pkg.entrypoint());
-            System.out.println(e.getMessage());
-        } catch (Exception e) {
-            System.err.println("\u001B[31m[ERROR]\u001B[0m Failed to run " + pkg.entrypoint());
+                ASTNode program = Parser.parse(tokens, context);
+
+                program.evaluate(context);
+            } catch (ParsingException e) {
+                System.err.println("\u001B[31m[ERROR]\u001B[0m Failed to parse " + pkg.entrypoint());
+                System.out.println(e.getMessage());
+            } catch (Exception e) {
+                System.err.println("\u001B[31m[ERROR]\u001B[0m Failed to run " + pkg.entrypoint());
+
+                if (e.getMessage() != null) {
+                    System.out.println(e.getMessage());
+                } else {
+                    System.out.println("Unknown error occurred");
+                }
+            } catch (OutOfMemoryError e) {
+                System.err.println("\u001B[31m[ERROR]\u001B[0m Failed to run " + pkg.entrypoint() + " (fatal error)");
+                System.out.println("Out of memory");
+            } catch (StackOverflowError e) {
+                System.err.println("\u001B[31m[ERROR]\u001B[0m Failed to run " + pkg.entrypoint() + " (fatal error)");
+                System.out.println("Stack overflow (infinite recursion?)");
+            } catch (Error e) {
+                System.err.println("\u001B[31m[ERROR]\u001B[0m Failed to run " + pkg.entrypoint() + " (fatal error)");
+
+                if (e.getMessage() != null) {
+                    System.out.println(e.getMessage());
+                } else {
+                    System.out.println("Unknown error occurred");
+                }
+            }
+        } catch (IOException e) {
+            System.err.println("\u001B[31m[ERROR]\u001B[0m Failed to read " + pkg.entrypoint());
             System.out.println(e.getMessage());
         }
     }

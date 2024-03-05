@@ -37,8 +37,11 @@ import com.softlocked.orbit.lexer.Lexer;
 import java.util.*;
 
 public class Parser {
-    private static boolean insideClass = false;
     public static ASTNode parse(List<String> tokens, GlobalContext context) throws ParsingException {
+        return parse(tokens, context, "");
+    }
+
+    private static ASTNode parse(List<String> tokens, GlobalContext context, String clazzName) throws ParsingException {
         BodyASTNode body = new BodyASTNode(new ArrayList<>());
 
         // try {
@@ -78,7 +81,8 @@ public class Parser {
                     i = expression.second;
 
                     continue;
-                } else {
+                }
+                else {
                     Pair<List<String>, Integer> expression = fetchExpression(tokens, nextIndex);
 
                     if(expression.first.size() != 1) {
@@ -124,8 +128,6 @@ public class Parser {
                 List<String> superClasses = new ArrayList<>();
                 ASTNode bodyNode = null;
 
-                insideClass = true;
-
                 try {
                     if (next.equals(":") || next.equals("extends")) {
                         int bodyStart = findNext(tokens, nextIndex + 1, "{");
@@ -143,19 +145,17 @@ public class Parser {
                             throw new ParsingException("Unexpected end of file");
                         }
 
-                        bodyNode = parse(tokens.subList(bodyStart + 1, bodyEnd), context);
+                        bodyNode = parse(tokens.subList(bodyStart + 1, bodyEnd), context, className);
 
                         i = bodyEnd;
                     } else if (next.equals("{")) {
-                        int bodyStart = nextIndex;
-
-                        int bodyEnd = getPair(tokens, bodyStart, "{", "}");
+                        int bodyEnd = getPair(tokens, nextIndex, "{", "}");
 
                         if (bodyEnd == -1) {
                             throw new ParsingException("Unexpected end of file");
                         }
 
-                        bodyNode = parse(tokens.subList(bodyStart + 1, bodyEnd), context);
+                        bodyNode = parse(tokens.subList(nextIndex + 1, bodyEnd), context, className);
 
                         i = bodyEnd;
                     } else {
@@ -200,11 +200,8 @@ public class Parser {
 
                     body.addNode(classDef);
 
-                    insideClass = false;
-
                     continue;
                 } catch (ParsingException e) {
-                    insideClass = false;
                     throw e;
                 }
             }
@@ -295,7 +292,8 @@ public class Parser {
                                 if(subList.size() == 1) {
                                     arguments.add(new Pair<>(subList.get(0), Variable.Type.ANY));
                                 } else if(subList.size() == 2) {
-                                    Variable.Type type = Variable.Type.fromJavaClass(GlobalContext.getPrimitiveType(subList.get(0)));
+                                    Class<?> primitiveType = GlobalContext.getPrimitiveType(subList.get(0));
+                                    Variable.Type type = primitiveType != null ? Variable.Type.fromJavaClass(primitiveType) : Variable.Type.CLASS;
                                     if(type == null) type = Variable.Type.CLASS;
                                     arguments.add(new Pair<>(subList.get(1), type));
                                 } else {
@@ -310,7 +308,8 @@ public class Parser {
                                 if(params.size() == 1) {
                                     arguments.add(new Pair<>(params.get(0), Variable.Type.ANY));
                                 } else if(params.size() == 2) {
-                                    Variable.Type type = Variable.Type.fromJavaClass(GlobalContext.getPrimitiveType(params.get(0)));
+                                    Class<?> primitiveType = GlobalContext.getPrimitiveType(params.get(0));
+                                    Variable.Type type = primitiveType != null ? Variable.Type.fromJavaClass(primitiveType) : Variable.Type.CLASS;
                                     if(type == null) type = Variable.Type.CLASS;
                                     arguments.add(new Pair<>(params.get(1), type));
                                 } else {
@@ -375,13 +374,13 @@ public class Parser {
                 }
             }
 
-            if(token.matches(Utils.IDENTIFIER_REGEX) && !Utils.isKeyword(token) && insideClass) {
+            if(token.matches(Utils.IDENTIFIER_REGEX) && !Utils.isKeyword(token) && !clazzName.isEmpty()) {
                 String next = getNext(tokens, i + 1);
                 int nextIndex = findNext(tokens, i + 1, next);
 
                 String last = getLast(tokens, i - 1);
 
-                if(next != null && last != null && next.equals("(") && (last.equals("{") || last.equals("}"))) {
+                if(token.equals(clazzName) && next != null && (last == null || last.equals("{") || last.equals("}")) && next.equals("(")) {
                     // Constructor call
                     int end = findNext(tokens, nextIndex, ")");
 
@@ -396,7 +395,8 @@ public class Parser {
                         if(subList.size() == 1) {
                             arguments.add(new Pair<>(subList.get(0), Variable.Type.ANY));
                         } else if(subList.size() == 2) {
-                            Variable.Type type = Variable.Type.fromJavaClass(GlobalContext.getPrimitiveType(subList.get(0)));
+                            Class<?> primitiveType = GlobalContext.getPrimitiveType(params.get(0));
+                            Variable.Type type = primitiveType != null ? Variable.Type.fromJavaClass(primitiveType) : Variable.Type.CLASS;
                             if(type == null) type = Variable.Type.CLASS;
                             arguments.add(new Pair<>(subList.get(1), type));
                         } else {
@@ -411,7 +411,8 @@ public class Parser {
                         if(params.size() == 1) {
                             arguments.add(new Pair<>(params.get(0), Variable.Type.ANY));
                         } else if(params.size() == 2) {
-                            Variable.Type type = Variable.Type.fromJavaClass(GlobalContext.getPrimitiveType(params.get(0)));
+                            Class<?> primitiveType = GlobalContext.getPrimitiveType(params.get(0));
+                            Variable.Type type = primitiveType != null ? Variable.Type.fromJavaClass(primitiveType) : Variable.Type.CLASS;
                             if(type == null) type = Variable.Type.CLASS;
                             arguments.add(new Pair<>(params.get(1), type));
                         } else {
@@ -474,133 +475,133 @@ public class Parser {
                 String identifier = getNext(tokens, i + 1);
                 int identifierIndex = findNext(tokens, i + 1, identifier);
 
-                if (identifier == null) {
-                    throw new ParsingException("Unexpected end of file");
-                }
+                if (identifier != null) {
+                    if (OperationType.fromSymbol(identifier) != null || (identifier.matches(Utils.IDENTIFIER_REGEX) && !Utils.isKeyword(identifier))) {
+                        if (identifierIndex < tokens.size()) {
+                            String next = getNext(tokens, identifierIndex + 1);
+                            int nextIndex = findNext(tokens, identifierIndex + 1, next);
 
-                if (OperationType.fromSymbol(identifier) != null || (identifier.matches(Utils.IDENTIFIER_REGEX) && !Utils.isKeyword(identifier))) {
-                    if (identifierIndex < tokens.size()) {
-                        String next = getNext(tokens, identifierIndex + 1);
-                        int nextIndex = findNext(tokens, identifierIndex + 1, next);
-
-                        if (next == null || next.equals(";")) {
-                            body.addNode(new DecObjASTNode(
-                                    identifier,
-                                    new ValueASTNode(null),
-                                    token
-                            ));
-
-                            i = next == null ? tokens.size() : nextIndex;
-
-                            continue;
-                        }
-
-                        switch (next) {
-                            case "=", "be" -> {
-                                Pair<List<String>, Integer> expression = fetchExpression(tokens, nextIndex + 1);
-
-                                List<String> postfix = infixToPostfix(expression.first);
-
+                            if (next == null || next.equals(";")) {
                                 body.addNode(new DecObjASTNode(
                                         identifier,
-                                        postfixToAST(postfix, context),
+                                        new ValueASTNode(null),
                                         token
                                 ));
 
-                                i = expression.second;
+                                i = next == null ? tokens.size() : nextIndex;
 
                                 continue;
                             }
-                            case "(" -> {
-                                // Function declaration
-                                int end = findNext(tokens, nextIndex, ")");
 
-                                List<String> params = tokens.subList(nextIndex + 1, end);
+                            switch (next) {
+                                case "=", "be" -> {
+                                    Pair<List<String>, Integer> expression = fetchExpression(tokens, nextIndex + 1);
 
-                                List<Pair<String, Variable.Type>> arguments = new ArrayList<>();
+                                    List<String> postfix = infixToPostfix(expression.first);
 
-                                int nextComma = getNextSeparator(params, 0);
+                                    body.addNode(new DecObjASTNode(
+                                            identifier,
+                                            postfixToAST(postfix, context),
+                                            token
+                                    ));
 
-                                while (nextComma != -1) {
-                                    List<String> subList = params.subList(0, nextComma);
-                                    if(subList.size() == 1) {
-                                        arguments.add(new Pair<>(subList.get(0), Variable.Type.ANY));
-                                    } else if(subList.size() == 2) {
-                                        Variable.Type type = Variable.Type.fromJavaClass(GlobalContext.getPrimitiveType(subList.get(0)));
-                                        if(type == null) type = Variable.Type.CLASS;
-                                        arguments.add(new Pair<>(subList.get(1), type));
-                                    } else {
-                                        throw new ParsingException("Invalid function declaration");
+                                    i = expression.second;
+
+                                    continue;
+                                }
+                                case "(" -> {
+                                    // Function declaration
+                                    int end = findNext(tokens, nextIndex, ")");
+
+                                    List<String> params = tokens.subList(nextIndex + 1, end);
+
+                                    List<Pair<String, Variable.Type>> arguments = new ArrayList<>();
+
+                                    int nextComma = getNextSeparator(params, 0);
+
+                                    while (nextComma != -1) {
+                                        List<String> subList = params.subList(0, nextComma);
+                                        if (subList.size() == 1) {
+                                            arguments.add(new Pair<>(subList.get(0), Variable.Type.ANY));
+                                        } else if (subList.size() == 2) {
+                                            Class<?> primitiveType = GlobalContext.getPrimitiveType(params.get(0));
+                                            Variable.Type type = primitiveType != null ? Variable.Type.fromJavaClass(primitiveType) : Variable.Type.CLASS;
+                                            if (type == null) type = Variable.Type.CLASS;
+                                            arguments.add(new Pair<>(subList.get(1), type));
+                                        } else {
+                                            throw new ParsingException("Invalid function declaration");
+                                        }
+
+                                        params = params.subList(nextComma + 1, params.size());
+                                        nextComma = getNextSeparator(params, 0);
                                     }
 
-                                    params = params.subList(nextComma + 1, params.size());
-                                    nextComma = getNextSeparator(params, 0);
-                                }
-
-                                if(!params.isEmpty()) {
-                                    if(params.size() == 1) {
-                                        arguments.add(new Pair<>(params.get(0), Variable.Type.ANY));
-                                    } else if(params.size() == 2) {
-                                        Variable.Type type = Variable.Type.fromJavaClass(GlobalContext.getPrimitiveType(params.get(0)));
-                                        if(type == null) type = Variable.Type.CLASS;
-                                        arguments.add(new Pair<>(params.get(1), type));
-                                    } else {
-                                        throw new ParsingException("Invalid function declaration");
+                                    if (!params.isEmpty()) {
+                                        if (params.size() == 1) {
+                                            arguments.add(new Pair<>(params.get(0), Variable.Type.ANY));
+                                        } else if (params.size() == 2) {
+                                            Class<?> primitiveType = GlobalContext.getPrimitiveType(params.get(0));
+                                            Variable.Type type = primitiveType != null ? Variable.Type.fromJavaClass(primitiveType) : Variable.Type.CLASS;
+                                            if (type == null) type = Variable.Type.CLASS;
+                                            arguments.add(new Pair<>(params.get(1), type));
+                                        } else {
+                                            throw new ParsingException("Invalid function declaration");
+                                        }
                                     }
-                                }
 
-                                String nextC = getNext(tokens, end + 1);
-                                int nextIndexC = findNext(tokens, end + 1, nextC);
+                                    String nextC = getNext(tokens, end + 1);
+                                    int nextIndexC = findNext(tokens, end + 1, nextC);
 
-                                if(nextC == null) {
-                                    throw new ParsingException("Unexpected end of file");
-                                }
-
-                                int bodyEnd = 0;
-
-                                switch (nextC) {
-                                    case ";" -> {
-                                        body.addNode(new OrbitFunction(
-                                                identifier,
-                                                arguments.size(),
-                                                arguments,
-                                                new BodyASTNode(new ArrayList<>()),
-                                                Variable.Type.CLASS
-                                        ));
-
-                                        i = nextIndexC;
-
-                                        continue;
+                                    if (nextC == null) {
+                                        throw new ParsingException("Unexpected end of file");
                                     }
-                                    case "{"  -> {
-                                        bodyEnd = getBodyEnd(tokens, nextIndexC, "{");
+
+                                    int bodyEnd = 0;
+
+                                    switch (nextC) {
+                                        case ";" -> {
+                                            body.addNode(new OrbitFunction(
+                                                    identifier,
+                                                    arguments.size(),
+                                                    arguments,
+                                                    new BodyASTNode(new ArrayList<>()),
+                                                    Variable.Type.CLASS
+                                            ));
+
+                                            i = nextIndexC;
+
+                                            continue;
+                                        }
+                                        case "{" -> {
+                                            bodyEnd = getBodyEnd(tokens, nextIndexC, "{");
+                                        }
+                                        case "does" -> {
+                                            bodyEnd = getBodyEnd(tokens, nextIndexC, "does", "do", "then");
+                                        }
                                     }
-                                    case "does" -> {
-                                        bodyEnd = getBodyEnd(tokens, nextIndexC, "does", "do", "then");
+
+                                    if (bodyEnd == -1) {
+                                        throw new ParsingException("Unexpected end of file");
+                                    } else if (bodyEnd == 0) {
+                                        throw new ParsingException("Invalid function body");
                                     }
+
+                                    List<String> bodyTokens = tokens.subList(nextIndexC + 1, bodyEnd - 1);
+
+                                    ASTNode functionBody = parse(bodyTokens, context);
+
+                                    body.addNode(new OrbitFunction(
+                                            identifier,
+                                            arguments.size(),
+                                            arguments,
+                                            functionBody,
+                                            Variable.Type.CLASS
+                                    ));
+
+                                    i = bodyEnd - 1;
+
+                                    continue;
                                 }
-
-                                if(bodyEnd == -1) {
-                                    throw new ParsingException("Unexpected end of file");
-                                } else if(bodyEnd == 0) {
-                                    throw new ParsingException("Invalid function body");
-                                }
-
-                                List<String> bodyTokens = tokens.subList(nextIndexC + 1, bodyEnd - 1);
-
-                                ASTNode functionBody = parse(bodyTokens, context);
-
-                                body.addNode(new OrbitFunction(
-                                        identifier,
-                                        arguments.size(),
-                                        arguments,
-                                        functionBody,
-                                        Variable.Type.CLASS
-                                ));
-
-                                i = bodyEnd - 1;
-
-                                continue;
                             }
                         }
                     }
@@ -612,113 +613,111 @@ public class Parser {
                 String next = getNext(tokens, i + 1);
                 int nextIndex = findNext(tokens, i + 1, next);
 
-                if(next == null) {
-                    throw new ParsingException("Unexpected end of file");
-                }
+                if(next != null) {
+                    ASTNode value;
+                    Pair<List<String>, Integer> expression = null;
 
-                ASTNode value;
-                Pair<List<String>, Integer> expression = null;
+                    if (!next.equals("(") && !next.equals(":")) {
+                        if (!next.equals("++") && !next.equals("--")) {
+                            expression = fetchExpression(tokens, nextIndex + 1);
+                        }
 
-                if(!next.equals("(") && !next.equals(":")) {
-                    if (!next.equals("++") && !next.equals("--")) {
-                        expression = fetchExpression(tokens, nextIndex + 1);
+                        switch (next) {
+                            case "++" -> {
+                                value = new OperationASTNode(
+                                        new VariableASTNode(token),
+                                        new ValueASTNode(1),
+                                        OperationType.ADD
+                                );
+                            }
+                            case "--" -> {
+                                value = new OperationASTNode(
+                                        new VariableASTNode(token),
+                                        new ValueASTNode(1),
+                                        OperationType.SUBTRACT
+                                );
+                            }
+                            case "=" -> {
+                                List<String> postfix = infixToPostfix(expression.first);
+
+                                value = postfixToAST(postfix, context);
+                            }
+                            case "+=" -> {
+                                List<String> postfix = infixToPostfix(expression.first);
+
+                                value = new OperationASTNode(
+                                        new VariableASTNode(token),
+                                        postfixToAST(postfix, context),
+                                        OperationType.ADD
+                                );
+                            }
+                            case "-=" -> {
+                                List<String> postfix = infixToPostfix(expression.first);
+
+                                value = new OperationASTNode(
+                                        new VariableASTNode(token),
+                                        postfixToAST(postfix, context),
+                                        OperationType.SUBTRACT
+                                );
+                            }
+                            case "*=" -> {
+                                List<String> postfix = infixToPostfix(expression.first);
+
+                                value = new OperationASTNode(
+                                        new VariableASTNode(token),
+                                        postfixToAST(postfix, context),
+                                        OperationType.MULTIPLY
+                                );
+                            }
+                            case "/=" -> {
+                                List<String> postfix = infixToPostfix(expression.first);
+
+                                value = new OperationASTNode(
+                                        new VariableASTNode(token),
+                                        postfixToAST(postfix, context),
+                                        OperationType.DIVIDE
+                                );
+                            }
+                            case "%=" -> {
+                                List<String> postfix = infixToPostfix(expression.first);
+
+                                value = new OperationASTNode(
+                                        new VariableASTNode(token),
+                                        postfixToAST(postfix, context),
+                                        OperationType.MODULO
+                                );
+                            }
+                            default -> {
+                                expression = fetchExpression(tokens, nextIndex);
+
+                                List<String> functionCall = new ArrayList<>();
+
+                                functionCall.add(token);
+                                functionCall.add("(");
+                                functionCall.addAll(expression.first);
+                                functionCall.add(")");
+
+                                Pair<List<String>, Integer> exp2 = fetchExpression(functionCall, 0);
+
+                                List<String> postfix = infixToPostfix(exp2.first);
+
+                                body.addNode(postfixToAST(postfix, context));
+
+                                i = expression.second;
+
+                                continue;
+                            }
+                        }
+
+                        body.addNode(new AssignVarASTNode(
+                                token,
+                                value
+                        ));
+
+                        i = expression != null ? expression.second : nextIndex;
+
+                        continue;
                     }
-
-                    switch (next) {
-                        case "++" -> {
-                            value = new OperationASTNode(
-                                    new VariableASTNode(token),
-                                    new ValueASTNode(1),
-                                    OperationType.ADD
-                            );
-                        }
-                        case "--" -> {
-                            value = new OperationASTNode(
-                                    new VariableASTNode(token),
-                                    new ValueASTNode(1),
-                                    OperationType.SUBTRACT
-                            );
-                        }
-                        case "=" -> {
-                            List<String> postfix = infixToPostfix(expression.first);
-
-                            value = postfixToAST(postfix, context);
-                        }
-                        case "+=" -> {
-                            List<String> postfix = infixToPostfix(expression.first);
-
-                            value = new OperationASTNode(
-                                    new VariableASTNode(token),
-                                    postfixToAST(postfix, context),
-                                    OperationType.ADD
-                            );
-                        }
-                        case "-=" -> {
-                            List<String> postfix = infixToPostfix(expression.first);
-
-                            value = new OperationASTNode(
-                                    new VariableASTNode(token),
-                                    postfixToAST(postfix, context),
-                                    OperationType.SUBTRACT
-                            );
-                        }
-                        case "*=" -> {
-                            List<String> postfix = infixToPostfix(expression.first);
-
-                            value = new OperationASTNode(
-                                    new VariableASTNode(token),
-                                    postfixToAST(postfix, context),
-                                    OperationType.MULTIPLY
-                            );
-                        }
-                        case "/=" -> {
-                            List<String> postfix = infixToPostfix(expression.first);
-
-                            value = new OperationASTNode(
-                                    new VariableASTNode(token),
-                                    postfixToAST(postfix, context),
-                                    OperationType.DIVIDE
-                            );
-                        }
-                        case "%=" -> {
-                            List<String> postfix = infixToPostfix(expression.first);
-
-                            value = new OperationASTNode(
-                                    new VariableASTNode(token),
-                                    postfixToAST(postfix, context),
-                                    OperationType.MODULO
-                            );
-                        }
-                        default -> {
-                            expression = fetchExpression(tokens, nextIndex);
-
-                            List<String> functionCall = new ArrayList<>();
-
-                            functionCall.add(token);
-                            functionCall.add("(");
-                            functionCall.addAll(expression.first);
-                            functionCall.add(")");
-
-                            Pair<List<String>, Integer> exp2 = fetchExpression(functionCall, 0);
-
-                            List<String> postfix = infixToPostfix(exp2.first);
-
-                            body.addNode(postfixToAST(postfix, context));
-
-                            i = expression.second;
-
-                            continue;
-                        }
-                    }
-
-                    body.addNode(new AssignVarASTNode(
-                            token,
-                            value
-                    ));
-
-                    i = expression != null ? expression.second : nextIndex;
-
-                    continue;
                 }
             }
 
@@ -1495,12 +1494,17 @@ public class Parser {
                         stack.push(new ValueASTNode(stack.pop().evaluate(null)));
                     }
                 } else {
-                    stack.push(new ReferenceASTNode(left, right));
+                    if(!(left instanceof ReferenceASTNode reference)) {
+                        stack.push(new ReferenceASTNode(left, right));
 
-                    // If right is a value then throw an error
-                    if(right instanceof ValueASTNode) {
-                        throw new ParsingException("Invalid reference");
-                    }
+                        // If right is a value then throw an error
+                        if(right instanceof ValueASTNode) {
+                            throw new ParsingException("Invalid reference");
+                        }
+                    } else {
+                        // Swap the rights of the current reference with the left
+                        stack.push(new ReferenceASTNode(reference.param(), new ReferenceASTNode(right, reference.function())));
+                   }
                 }
 
                 continue;

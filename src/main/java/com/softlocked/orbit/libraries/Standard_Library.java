@@ -164,11 +164,28 @@ public class Standard_Library implements OrbitJavaLibrary {
             }
         });
 
+        // system.path
+        context.addFunction(new NativeFunction("system.workingPath", 0, Variable.Type.STRING) {
+            @Override
+            public Object call(ILocalContext context, List<Object> args) {
+                return context.getRoot().getParentPath();
+            }
+        });
+
         // system.exit
         context.addFunction(new NativeFunction("system.exit", List.of(Variable.Type.INT), Variable.Type.VOID) {
             @Override
             public Object call(ILocalContext context, List<Object> args) {
                 System.exit((int) args.get(0));
+                return null;
+            }
+        });
+
+        // exit()
+        context.addFunction(new NativeFunction("exit", 0, Variable.Type.VOID) {
+            @Override
+            public Object call(ILocalContext context, List<Object> args) {
+                System.exit(0);
                 return null;
             }
         });

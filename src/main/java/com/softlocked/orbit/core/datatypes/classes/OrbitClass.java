@@ -50,27 +50,28 @@ public class OrbitClass {
         return constructors;
     }
 
-    public void setFields(HashMap<String, Pair<Variable.Type, ASTNode>> fields) {
-        this.fields = fields;
+    public boolean extendsClass(OrbitClass clazz) {
+        if(this.equals(clazz)) {
+            return true;
+        }
+
+        if(this.superClasses != null) {
+            for (OrbitClass superClass : this.superClasses) {
+                if (superClass.extendsClass(clazz)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
-    public void setFunctions(HashMap<Pair<String, Integer>, IFunction> functions) {
-        this.functions = functions;
-    }
+    @Override
+    public boolean equals(Object obj) {
+        if(obj instanceof OrbitClass clazz) {
+            return clazz.getName().equals(this.name);
+        }
 
-    public void setConstructors(HashMap<Integer, ClassConstructor> constructors) {
-        this.constructors = constructors;
-    }
-
-    public void addField(String name, Pair<Variable.Type, ASTNode> field) {
-        fields.put(name, field);
-    }
-
-    public void addFunction(IFunction function) {
-        functions.put(new Pair<>(function.getName(), function.getParameterCount()), function);
-    }
-
-    public void addConstructor(ClassConstructor constructor) {
-        constructors.put(constructor.getParameterCount(), constructor);
+        return false;
     }
 }

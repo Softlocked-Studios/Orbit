@@ -35,10 +35,12 @@ public record ReferenceASTNode(ASTNode param, ASTNode function) implements ASTNo
 
             String name = type.getTypeName(left) + "." + functionCall.name();
 
-            // Now create a new function call, with this name, and where the first argument is the left
-            FunctionCallASTNode newFunctionCall = new FunctionCallASTNode(name, functionCall.args());
+            List<ASTNode> args = new ArrayList<>();
+            args.add(param);
+            args.addAll(functionCall.args());
 
-            newFunctionCall.args().add(0, param);
+            // Now create a new function call, with this name, and where the first argument is the left
+            FunctionCallASTNode newFunctionCall = new FunctionCallASTNode(name, args);
 
             return newFunctionCall.evaluate(context);
         } else if(function instanceof VariableASTNode variableASTNode) {

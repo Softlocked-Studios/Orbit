@@ -5,12 +5,14 @@ import com.softlocked.orbit.interpreter.memory.GlobalContext;
 import com.softlocked.orbit.lexer.Lexer;
 import com.softlocked.orbit.opm.project.LocalProject;
 import com.softlocked.orbit.opm.packager.OrbitPackage;
+import com.softlocked.orbit.opm.project.OrbitREPL;
 import com.softlocked.orbit.parser.Parser;
 
 import java.io.File;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Scanner;
 
 public class Main {
     public static void main(String[] args) throws Exception {
@@ -99,18 +101,39 @@ public class Main {
                 }
             }
             else if(args[0].equals("orbit")) {
-                if(args.length < 2) {
-                    System.out.println("Usage:");
-                    System.out.println("orbit <path> [options]");
-                    System.out.println();
-                    System.out.println("Options:");
-                    System.out.println("-c          Compiles the specified file as bytecode");
-                    System.out.println("-r          Runs the specified bytecode file");
-                    System.out.println("<none>      Runs the specified file directly");
-                    return;
-                }
+                if(args.length == 1) {
+                    String basePath = Main.class.getProtectionDomain().getCodeSource().getLocation().getPath();
 
-                throw new IllegalArgumentException("Orbit command not implemented yet");
+                    // Decode the path to handle spaces and special characters
+                    basePath = URLDecoder.decode(basePath, StandardCharsets.UTF_8);
+
+                    basePath = new File(basePath).getParentFile().getAbsolutePath();
+
+                    String modulesPath = basePath + File.separator + "modules" + File.separator;
+
+                    OrbitREPL repl = new OrbitREPL(new GlobalContext(basePath, modulesPath));
+
+                    Scanner scanner = new Scanner(System.in);
+
+                    System.out.println("Running Orbit REPL. Type 'exit' to exit.");
+                    while(true) {
+                        System.out.print("\u001B[32m>>> \u001B[0m");
+                        try {
+                            String input = scanner.nextLine();
+
+                            if (input.equals("exit")) {
+                                break;
+                            }
+                            else if (input.equals("clear") || input.equals("cls")) {
+                                System.out.print("\033[H\033[2J");
+                                System.out.flush();
+                                continue;
+                            }
+
+                            repl.run(input);
+                        } catch (IllegalStateException ignored) {}
+                    }
+                }
             }
         } else {
             System.out.println("\u001B[31mNo command specified.\u001B[0m");

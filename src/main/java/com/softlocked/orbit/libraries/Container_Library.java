@@ -77,14 +77,22 @@ public class Container_Library implements OrbitJavaLibrary {
         context.addFunction(new NativeFunction("list.get", List.of(Variable.Type.LIST, Variable.Type.INT), Variable.Type.ANY) {
             @Override
             public Object call(ILocalContext context, List<Object> args) {
-                return ((List<Object>) args.get(0)).get((int) args.get(1));
+                int index = (int) args.get(1);
+                if(index < 0) {
+                    index = ((List<Object>) args.get(0)).size() + index;
+                }
+                return ((List<Object>) args.get(0)).get(index);
             }
         });
 
         context.addFunction(new NativeFunction("list.remove", List.of(Variable.Type.LIST, Variable.Type.INT), Variable.Type.VOID) {
             @Override
             public Object call(ILocalContext context, List<Object> args) {
-                ((List<Object>) args.get(0)).remove((int) args.get(1));
+                int index = (int) args.get(1);
+                if(index < 0) {
+                    index = ((List<Object>) args.get(0)).size() + index;
+                }
+                ((List<Object>) args.get(0)).remove(index);
                 return null;
             }
         });
