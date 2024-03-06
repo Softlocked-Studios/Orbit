@@ -1726,25 +1726,11 @@ public class Parser {
                 ASTNode left = stack.pop();
                 OperationType operationType = OperationType.fromSymbol(token);
 
-                if(operationType != OperationType.REF) {
-                    stack.push(new OperationASTNode(left, right, operationType));
+                stack.push(new OperationASTNode(left, right, operationType));
 
-                    // Preprocess the AST. If they're both values, then we can just evaluate them
-                    if (left instanceof ValueASTNode && right instanceof ValueASTNode) {
-                        stack.push(new ValueASTNode(stack.pop().evaluate(null)));
-                    }
-                } else {
-                    if(!(left instanceof ReferenceASTNode reference)) {
-                        stack.push(new ReferenceASTNode(left, right));
-
-                        // If right is a value then throw an error
-                        if(right instanceof ValueASTNode) {
-                            throw new ParsingException("Invalid reference");
-                        }
-                    } else {
-                        // Swap the rights of the current reference with the left
-                        stack.push(new ReferenceASTNode(reference.param(), new ReferenceASTNode(right, reference.function())));
-                   }
+                // Preprocess the AST. If they're both values, then we can just evaluate them
+                if (left instanceof ValueASTNode && right instanceof ValueASTNode) {
+                    stack.push(new ValueASTNode(stack.pop().evaluate(null)));
                 }
 
                 continue;
