@@ -110,29 +110,7 @@ public class Main {
 
                     OrbitREPL repl = new OrbitREPL(new GlobalContext(basePath, modulesPath));
 
-                    Scanner scanner = new Scanner(System.in);
-
-                    System.out.println("Running Orbit REPL. Type 'exit' to exit.");
-                    while(true) {
-                        System.out.print("\u001B[32m>>> \u001B[0m");
-                        try {
-                            String input = scanner.nextLine();
-
-                            if (input.equals("exit")) {
-                                break;
-                            }
-                            else if (input.equals("clear") || input.equals("cls")) {
-                                System.out.print("\033[H\033[2J");
-                                System.out.flush();
-                                continue;
-                            }
-
-                            repl.run(input);
-                        } catch (IllegalStateException ignored) {
-                        } catch (NoSuchElementException ignored) {
-                            break;
-                        }
-                    }
+                    repl.run();
                 }
             }
         } else {

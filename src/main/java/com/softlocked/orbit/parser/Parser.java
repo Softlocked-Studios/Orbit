@@ -1339,7 +1339,7 @@ public class Parser {
                     continue;
                 }
                 int nextIndex = findNext(tokens, i + 1, next);
-                if (next.equals(",") || next.equals("?") || next.equals(":") || (OperationType.fromSymbol(next) != null && !next.equals("!") && !next.equals("~"))) {
+                if (next.equals(",") || next.equals("?") || next.equals("=") || next.equals(":") || (OperationType.fromSymbol(next) != null && !next.equals("!") && !next.equals("~"))) {
                     expression.add(next);
                     i = nextIndex;
                 } else {
@@ -1361,7 +1361,7 @@ public class Parser {
         for (int i = 0; i < infix.size(); i++) {
             String token = infix.get(i);
 
-            if (token.equals(",") || token.equals("?") || token.equals("=") || token.equals("{") || token.equals("}") || token.equals("[") || token.equals("]")) {
+            if (token.equals(",") || token.equals(":") || token.equals("?") || token.equals("=") || token.equals("{") || token.equals("}") || token.equals("[") || token.equals("]")) {
                 while (!operatorStack.isEmpty() && !operatorStack.peek().equals("(")) {
                     postfixExpression.add(operatorStack.pop());
                 }
@@ -1606,7 +1606,8 @@ public class Parser {
                 while (next != -1) {
                     int colon = subExpression.indexOf(":");
                     int equals = subExpression.indexOf("=");
-                    if(equals != -1 && (colon == -1 || equals < colon)) {
+
+                    if (equals != -1 && (colon == -1 || equals < colon)) {
                         colon = equals;
                     }
 
@@ -1640,6 +1641,7 @@ public class Parser {
                     // Split by the first colon or equals sign
                     int colon = subExpression.indexOf(":");
                     int equals = subExpression.indexOf("=");
+
                     if(equals != -1 && (colon == -1 || equals < colon)) {
                         colon = equals;
                     }
