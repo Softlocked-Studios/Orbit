@@ -4,6 +4,7 @@ import com.softlocked.orbit.core.ast.ASTNode;
 import com.softlocked.orbit.core.datatypes.Variable;
 import com.softlocked.orbit.core.datatypes.classes.OrbitObject;
 import com.softlocked.orbit.core.datatypes.functions.IFunction;
+import com.softlocked.orbit.interpreter.ast.value.ValueASTNode;
 import com.softlocked.orbit.interpreter.ast.value.VariableASTNode;
 import com.softlocked.orbit.interpreter.ast.variable.FunctionCallASTNode;
 import com.softlocked.orbit.memory.ILocalContext;
@@ -42,7 +43,7 @@ public record ReferenceASTNode(ASTNode param, ASTNode function) implements ASTNo
             String name = type.getTypeName(left) + "." + functionCall.name();
 
             List<ASTNode> args = new ArrayList<>();
-            args.add(param);
+            args.add(new ValueASTNode(left));
             args.addAll(functionCall.args());
 
             // Now create a new function call, with this name, and where the first argument is the left

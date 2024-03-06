@@ -1493,6 +1493,51 @@ public class Parser {
                 continue;
             }
 
+            else if (token.equals(":")) {
+                // The left token is in the stack, but the right token must be fetched. it's uh... complicated since its infix
+                ASTNode left = stack.pop();
+
+                List<String> rightTokens;
+
+                // look for either the next :, ; or uneven parenthesis
+                int end = -1;
+                int depth = 0;
+                for (int j = i + 1; j < postfix.size(); j++) {
+                    String t = postfix.get(j);
+                    if (t.equals("(")) {
+                        depth++;
+                    } else if (t.equals(")")) {
+                        depth--;
+                    }
+                    if (OperationType.fromSymbol(t) != null && depth == 0) {
+                        end = j;
+                        break;
+                    }
+                    else if (t.equals(";")) {
+                        end = j;
+                        break;
+                    }
+                    else if (depth < 0) {
+                        end = j;
+                        break;
+                    }
+                }
+
+                if(end == -1) {
+                    end = postfix.size();
+                }
+
+                rightTokens = postfix.subList(i + 1, end);
+
+                ASTNode right = postfixToAST(rightTokens, context);
+
+                stack.push(new ReferenceASTNode(left, right));
+
+                i = end - 1;
+
+                continue;
+            }
+
             else if (OperationType.fromSymbol(token) != null) {
                 ASTNode right = stack.pop();
                 ASTNode left = stack.pop();

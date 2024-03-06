@@ -1,6 +1,9 @@
 package com.softlocked.orbit.application;
 
+import com.softlocked.orbit.core.ast.ASTNode;
 import com.softlocked.orbit.interpreter.memory.GlobalContext;
+import com.softlocked.orbit.lexer.Lexer;
+import com.softlocked.orbit.parser.Parser;
 import com.softlocked.orbit.project.LocalProject;
 import com.softlocked.orbit.opm.packager.OrbitPackage;
 import com.softlocked.orbit.project.OrbitREPL;
@@ -8,6 +11,7 @@ import com.softlocked.orbit.project.OrbitREPL;
 import java.io.File;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
 
