@@ -4,6 +4,7 @@ import com.softlocked.orbit.core.ast.ASTNode;
 import com.softlocked.orbit.core.datatypes.Variable;
 import com.softlocked.orbit.core.datatypes.classes.OrbitObject;
 import com.softlocked.orbit.core.evaluator.Breakpoint;
+import com.softlocked.orbit.core.exception.InternalException;
 import com.softlocked.orbit.interpreter.memory.GlobalContext;
 import com.softlocked.orbit.memory.ILocalContext;
 
@@ -15,21 +16,14 @@ public record TryCatchASTNode(ASTNode tryBlock, ASTNode catchBlock, String excep
         try {
             Object result = tryBlock.evaluate(context);
             if (result instanceof Breakpoint breakpoint) {
-                if(breakpoint.getType() == Breakpoint.Type.THROW) {
-                    Object value = breakpoint.getValue();
-
-                    if(!(value instanceof OrbitObject exception) || !exception.getClazz().extendsClass(context.getRoot().getClassType("exception"))) {
-                        throw new RuntimeException("Attempted to throw a non-exception object.");
-                    }
-
-                    context.addVariable(exceptionName, new Variable(Variable.Type.CLASS, exception));
-                    return catchBlock.evaluate(context);
-                } else {
-                    return breakpoint.getValue();
-                }
+                return breakpoint.getValue();
             }
 
             return result;
+        } catch (InternalException e) {
+            OrbitObject exception = e.getObject();
+            context.addVariable(exceptionName, new Variable(Variable.Type.CLASS, exception));
+            return catchBlock.evaluate(context);
         } catch (RuntimeException e) {
             OrbitObject exception = new OrbitObject(context.getRoot().getClassType("exception"), List.of(e.getMessage()), context.getRoot());
             context.addVariable(exceptionName, new Variable(Variable.Type.CLASS, exception));
