@@ -28,6 +28,32 @@ public class OrbitClass {
         this.fields = fields;
         this.functions = functions;
         this.constructors = constructors;
+
+        // Add fields from super classes if they are not overridden
+        if(superClasses != null) {
+            for (OrbitClass superClass : superClasses) {
+                if(superClass.getFields() != null) {
+                    for (String s : superClass.getFields().keySet()) {
+                        if(!this.fields.containsKey(s)) {
+                            this.fields.put(s, superClass.getFields().get(s));
+                        }
+                    }
+                }
+            }
+        }
+
+        // Add constructors from super classes if they are not overridden
+        if(superClasses != null) {
+            for (OrbitClass superClass : superClasses) {
+                if(superClass.getConstructors() != null) {
+                    for (Integer integer : superClass.getConstructors().keySet()) {
+                        if(!this.constructors.containsKey(integer)) {
+                            this.constructors.put(integer, superClass.getConstructors().get(integer));
+                        }
+                    }
+                }
+            }
+        }
     }
 
     public String getName() {

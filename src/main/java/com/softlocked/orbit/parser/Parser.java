@@ -7,6 +7,7 @@ import com.softlocked.orbit.core.datatypes.functions.IFunction;
 import com.softlocked.orbit.core.evaluator.Breakpoint;
 import com.softlocked.orbit.core.evaluator.Evaluator;
 import com.softlocked.orbit.core.exception.ParsingException;
+import com.softlocked.orbit.interpreter.ast.generic.TryCatchASTNode;
 import com.softlocked.orbit.interpreter.ast.object.ClassDefinitionASTNode;
 import com.softlocked.orbit.interpreter.ast.object.DecObjASTNode;
 import com.softlocked.orbit.interpreter.ast.operation.ReferenceASTNode;
@@ -115,6 +116,219 @@ public class Parser {
                 i = nextIndex;
 
                 continue;
+            }
+
+            else if(token.equals("return")) {
+                String next = getNext(tokens, i + 1);
+                int nextIndex = findNext(tokens, i + 1, next);
+
+                if(next == null || next.equals(";")) {
+                    body.addNode(new BreakASTNode(Breakpoint.Type.RETURN, null));
+
+                    i = nextIndex;
+                    continue;
+                }
+
+                Pair<List<String>, Integer> expression = fetchExpression(tokens, nextIndex);
+
+                List<String> postfix = infixToPostfix(expression.first);
+
+                body.addNode(new BreakASTNode(Breakpoint.Type.RETURN, postfixToAST(postfix, context)));
+
+                i = expression.second;
+
+                continue;
+            }
+
+            else if(token.equals("throw")) {
+                String next = getNext(tokens, i + 1);
+                int nextIndex = findNext(tokens, i + 1, next);
+
+                if(next == null || next.equals(";")) {
+                    throw new ParsingException("Invalid throw statement");
+                }
+
+                Pair<List<String>, Integer> expression = fetchExpression(tokens, nextIndex);
+
+                List<String> postfix = infixToPostfix(expression.first);
+
+                body.addNode(new BreakASTNode(Breakpoint.Type.THROW, postfixToAST(postfix, context)));
+
+                i = expression.second;
+
+                continue;
+            }
+
+            else if(token.equals("break")) {
+                body.addNode(new BreakASTNode(Breakpoint.Type.BREAK, null));
+            }
+
+            else if(token.equals("continue")) {
+                body.addNode(new BreakASTNode(Breakpoint.Type.CONTINUE, null));
+            }
+
+            // try... catch statement
+            else if (token.equals("try")) {
+                String next = getNext(tokens, i + 1);
+                int nextIndex = findNext(tokens, i + 1, next);
+
+                if(next == null) {
+                    throw new ParsingException("Unexpected end of file");
+                }
+
+                // C-style
+                if(next.equals("{")) {
+                    int bodyEnd = getBodyEnd(tokens, nextIndex, "{");
+
+                    if(bodyEnd == -1) {
+                        throw new ParsingException("Unexpected end of file");
+                    } else if(bodyEnd == 0) {
+                        throw new ParsingException("Invalid try block");
+                    }
+
+                    List<String> bodyTokens = tokens.subList(nextIndex + 1, bodyEnd - 1);
+
+                    ASTNode tryBody = parse(bodyTokens, context);
+
+                    i = bodyEnd - 1;
+
+                    next = getNext(tokens, i + 1);
+                    nextIndex = findNext(tokens, i + 1, next);
+
+                    if(next == null) {
+                        throw new ParsingException("Unexpected end of file");
+                    }
+
+                    if(!next.equals("catch")) {
+                        throw new ParsingException("Invalid try block");
+                    }
+
+                    next = getNext(tokens, nextIndex + 1);
+                    nextIndex = findNext(tokens, nextIndex + 1, next);
+
+                    if(next == null) {
+                        throw new ParsingException("Unexpected end of file");
+                    }
+
+                    // Get the exception name
+                    String exceptionName;
+
+                    if(next.equals("(")) {
+                        next = getNext(tokens, nextIndex + 1);
+                        nextIndex = findNext(tokens, nextIndex + 1, next);
+
+                        if(next == null) {
+                            throw new ParsingException("Unexpected end of file");
+                        }
+
+                        if(next.equals(")")) {
+                            throw new ParsingException("Invalid catch block");
+                        }
+
+                        exceptionName = next;
+
+                        next = getNext(tokens, nextIndex + 1);
+                        nextIndex = findNext(tokens, nextIndex + 1, next);
+                    } else {
+                        exceptionName = "e";
+                    }
+
+                    next = getNext(tokens, nextIndex + 1);
+                    nextIndex = findNext(tokens, nextIndex + 1, next);
+
+                    if(next == null) {
+                        throw new ParsingException("Unexpected end of file");
+                    }
+
+                    int catchBodyEnd = getBodyEnd(tokens, nextIndex, "{");
+
+                    if(catchBodyEnd == -1) {
+                        throw new ParsingException("Unexpected end of file");
+                    } else if(catchBodyEnd == 0) {
+                        throw new ParsingException("Invalid catch block");
+                    }
+
+                    List<String> catchBodyTokens = tokens.subList(nextIndex + 1, catchBodyEnd - 1);
+
+                    body.addNode(new TryCatchASTNode(
+                            tryBody,
+                            parse(catchBodyTokens, context),
+                            exceptionName
+                    ));
+
+                    i = catchBodyEnd - 1;
+
+                    continue;
+                }
+
+                // Lua-style
+                else {
+                    int pair = getPair(tokens, i, "try", "catch");
+
+                    if(pair == -1) {
+                        throw new ParsingException("Unexpected end of file");
+                    } else if(pair == 0) {
+                        throw new ParsingException("Invalid try block");
+                    }
+
+                    List<String> tryTokens = tokens.subList(i + 1, pair);
+
+                    ASTNode tryBody = parse(tryTokens, context);
+
+                    i = pair;
+
+                    next = getNext(tokens, i + 1);
+                    nextIndex = findNext(tokens, i + 1, next);
+
+                    if(next == null) {
+                        throw new ParsingException("Unexpected end of file");
+                    }
+
+                    String exceptionName;
+
+                    if(next.equals("(")) {
+                        next = getNext(tokens, i + 2);
+                        nextIndex = findNext(tokens, i + 2, next);
+
+                        if(next == null) {
+                            throw new ParsingException("Unexpected end of file");
+                        }
+
+                        if(next.equals(")")) {
+                            throw new ParsingException("Invalid catch block");
+                        }
+
+                        exceptionName = next;
+
+                        next = getNext(tokens, nextIndex + 1);
+                        nextIndex = findNext(tokens, nextIndex + 1, next);
+                    } else {
+                        exceptionName = "e";
+                    }
+
+                    next = getNext(tokens, nextIndex + 1);
+                    nextIndex = findNext(tokens, nextIndex + 1, next);
+
+                    int bodyEnd = getBodyEnd(tokens, pair, "catch", "does", "do", "then");
+
+                    if(bodyEnd == -1) {
+                        throw new ParsingException("Unexpected end of file");
+                    } else if(bodyEnd == 0) {
+                        throw new ParsingException("Invalid catch block");
+                    }
+
+                    List<String> catchTokens = tokens.subList(nextIndex, bodyEnd - 1);
+
+                    body.addNode(new TryCatchASTNode(
+                            tryBody,
+                            parse(catchTokens, context),
+                            exceptionName
+                    ));
+
+                    i = bodyEnd - 1;
+
+                    continue;
+                }
             }
 
             else if (token.equals("class")) {
@@ -355,7 +569,7 @@ public class Parser {
                                         bodyEnd = getBodyEnd(tokens, nextIndexC, "{");
                                     }
                                     case "does" -> {
-                                        bodyEnd = getBodyEnd(tokens, nextIndexC, "does", "do", "then");
+                                        bodyEnd = getBodyEnd(tokens, nextIndexC, "catch", "does", "do", "then");
                                     }
                                 }
 
@@ -457,7 +671,7 @@ public class Parser {
                             bodyEnd = getBodyEnd(tokens, nextIndexC, "{");
                         }
                         case "does" -> {
-                            bodyEnd = getBodyEnd(tokens, nextIndexC, "does", "do", "then");
+                            bodyEnd = getBodyEnd(tokens, nextIndexC, "catch", "does", "do", "then");
                         }
                     }
 
@@ -588,7 +802,7 @@ public class Parser {
                                             bodyEnd = getBodyEnd(tokens, nextIndexC, "{");
                                         }
                                         case "does" -> {
-                                            bodyEnd = getBodyEnd(tokens, nextIndexC, "does", "do", "then");
+                                            bodyEnd = getBodyEnd(tokens, nextIndexC, "catch", "does", "do", "then");
                                         }
                                     }
 
@@ -733,37 +947,6 @@ public class Parser {
                 }
             }
 
-            // 3. Returning a value
-            else if(token.equals("return")) {
-                String next = getNext(tokens, i + 1);
-                int nextIndex = findNext(tokens, i + 1, next);
-
-                if(next == null || next.equals(";")) {
-                    body.addNode(new BreakASTNode(Breakpoint.Type.RETURN, null));
-
-                    i = nextIndex;
-                    continue;
-                }
-
-                Pair<List<String>, Integer> expression = fetchExpression(tokens, nextIndex);
-
-                List<String> postfix = infixToPostfix(expression.first);
-
-                body.addNode(new BreakASTNode(Breakpoint.Type.RETURN, postfixToAST(postfix, context)));
-
-                i = expression.second;
-
-                continue;
-            }
-
-            else if(token.equals("break")) {
-                body.addNode(new BreakASTNode(Breakpoint.Type.BREAK, null));
-            }
-
-            else if(token.equals("continue")) {
-                body.addNode(new BreakASTNode(Breakpoint.Type.CONTINUE, null));
-            }
-
             // 4. While loops
             else if (token.equals("while")) {
                 Pair<String, Integer> next = findNext(tokens, i + 1, "{", "do");
@@ -779,7 +962,7 @@ public class Parser {
                         bodyEnd = getBodyEnd(tokens, next.second, "{");
                     }
                     case "do" -> {
-                        bodyEnd = getBodyEnd(tokens, next.second, "do", "then");
+                        bodyEnd = getBodyEnd(tokens, next.second, "catch", "does", "do", "then");
                     }
                 }
 
@@ -822,7 +1005,7 @@ public class Parser {
                         bodyEnd = getBodyEnd(tokens, next.second, "{");
                     }
                     case "do" -> {
-                        bodyEnd = getBodyEnd(tokens, next.second, "do", "then");
+                        bodyEnd = getBodyEnd(tokens, next.second, "catch", "does", "do", "then");
                     }
                 }
 
@@ -1049,7 +1232,7 @@ public class Parser {
                         end = bodyEnd;
                     }
                 } else if(next.first.equals("then")) {
-                    int bodyEnd = getBodyEnd(tokens, next.second, "then");
+                    int bodyEnd = getBodyEnd(tokens, next.second, "then", "do", "does", "catch");
 
                     if(bodyEnd == -1) {
                         throw new ParsingException("Unexpected end of file");

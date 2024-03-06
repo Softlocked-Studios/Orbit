@@ -8,6 +8,7 @@ public class Breakpoint {
         BREAK,
         CONTINUE,
         RETURN,
+        THROW
     }
 
     private final Type type;

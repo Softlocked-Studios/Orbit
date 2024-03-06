@@ -26,7 +26,11 @@ public class OrbitObject {
         LocalContext context = new LocalContext(rootContext);
         for (String field : clazz.getFields().keySet()) {
             Pair<Variable.Type, ASTNode> fieldData = clazz.getFields().get(field);
-            fields.put(field, new Variable(fieldData.first, fieldData.second.evaluate(context)));
+            if (fieldData.second != null) {
+                fields.put(field, new Variable(fieldData.first, fieldData.second.evaluate(context)));
+            } else {
+                fields.put(field, new Variable(fieldData.first, null));
+            }
         }
 
         fields.put("this", new Variable(Variable.Type.CLASS, this));

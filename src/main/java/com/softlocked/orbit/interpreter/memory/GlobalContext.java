@@ -6,6 +6,8 @@ import com.softlocked.orbit.core.datatypes.classes.OrbitClass;
 import com.softlocked.orbit.core.datatypes.classes.OrbitObject;
 import com.softlocked.orbit.core.datatypes.functions.IFunction;
 import com.softlocked.orbit.core.exception.ParsingException;
+import com.softlocked.orbit.interpreter.ast.value.VariableASTNode;
+import com.softlocked.orbit.interpreter.ast.variable.AssignVarASTNode;
 import com.softlocked.orbit.interpreter.function.ClassConstructor;
 import com.softlocked.orbit.interpreter.function.NativeFunction;
 import com.softlocked.orbit.java.OrbitJavaLibrary;
@@ -147,6 +149,27 @@ public class GlobalContext extends LocalContext {
 
         this.parentPath = parentPath;
         this.packagePath = packagePath;
+
+        addClass(new OrbitClass(
+                "exception", // name
+                new ArrayList<>(), // superClasses
+                new HashMap<>(Map.of(
+                        "message", new Pair<>(Variable.Type.STRING, null)
+                )), // fields
+                new HashMap<>(Map.of(
+                        new Pair<>("getMessage", 0), new NativeFunction("getMessage", 0, Variable.Type.STRING) {
+                            @Override
+                            public Object call(ILocalContext context, List<Object> args) {
+                                return context.getVariable("message").getValue();
+                            }
+                        }
+                )), // functions
+                new HashMap<>(Map.of(1, new ClassConstructor(
+                        1,
+                        List.of(new Pair<>("msg", Variable.Type.STRING)),
+                        new AssignVarASTNode("message", new VariableASTNode("msg"))
+                ))) // constructors
+        ));
 
         for(OrbitJavaLibrary library : builtInLibraries) {
             library.load(this);
