@@ -6,6 +6,16 @@ name: Maven Package
 on:
   release:
     types: [created]
+  workflow_dispatch:
+    inputs:
+      java-version:
+        description: 'Java version'
+        required: true
+        default: '17'
+      distribution:
+        description: 'Java distribution'
+        required: true
+        default: 'temurin'
 
 jobs:
   build:
