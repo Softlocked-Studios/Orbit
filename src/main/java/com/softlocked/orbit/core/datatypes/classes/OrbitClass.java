@@ -17,10 +17,10 @@ public class OrbitClass {
     private final String name;
     private final List<OrbitClass> superClasses;
 
-    private HashMap<String, Pair<Variable.Type, ASTNode>> fields;
-    private HashMap<Pair<String, Integer>, IFunction> functions;
+    private final HashMap<String, Pair<Variable.Type, ASTNode>> fields;
+    private final HashMap<Pair<String, Integer>, IFunction> functions;
 
-    private HashMap<Integer, ClassConstructor> constructors;
+    private final HashMap<Integer, ClassConstructor> constructors;
 
     public OrbitClass(String name, List<OrbitClass> superClasses, HashMap<String, Pair<Variable.Type, ASTNode>> fields, HashMap<Pair<String, Integer>, IFunction> functions, HashMap<Integer, ClassConstructor> constructors) {
         this.name = name;

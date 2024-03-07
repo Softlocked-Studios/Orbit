@@ -1522,7 +1522,7 @@ public class Parser {
                     continue;
                 }
                 int nextIndex = findNext(tokens, i + 1, next);
-                if (next.equals(",") || next.equals("?") || next.equals("=") || next.equals(":") || (OperationType.fromSymbol(next) != null && !next.equals("!") && !next.equals("~"))) {
+                if (next.equals(",") || next.equals("?") || next.equals("=") || (OperationType.fromSymbol(next) != null && !next.equals("!") && !next.equals("~"))) {
                     expression.add(next);
                     i = nextIndex;
                 } else {
@@ -1544,7 +1544,59 @@ public class Parser {
         for (int i = 0; i < infix.size(); i++) {
             String token = infix.get(i);
 
-            if (token.equals(",") || token.equals(":") || token.equals("?") || token.equals("=") || token.equals("{") || token.equals("}") || token.equals("[") || token.equals("]")) {
+            if (token.equals("{")) {
+                int end = getPair(infix, i, "{", "}");
+
+                postfixExpression.add("{");
+
+                List<String> subExpression = new ArrayList<>(infix.subList(i + 1, end));
+
+                int next = getNextSeparator(subExpression, 0);
+                while (next != -1) {
+                    int colon = subExpression.indexOf(":");
+                    int equals = subExpression.indexOf("=");
+
+                    if (equals != -1 && (colon == -1 || equals < colon)) {
+                        colon = equals;
+                    }
+
+                    List<String> keyList = subExpression.subList(0, colon);
+                    List<String> valueList = subExpression.subList(colon + 1, next);
+
+                    postfixExpression.addAll(infixToPostfix(keyList));
+                    postfixExpression.add("=");
+                    postfixExpression.addAll(infixToPostfix(valueList));
+
+                    subExpression = subExpression.subList(next + 1, subExpression.size());
+                    next = getNextSeparator(subExpression, 0);
+
+                    postfixExpression.add(",");
+                }
+
+                if(!subExpression.isEmpty()) {
+                    int colon = subExpression.indexOf(":");
+                    int equals = subExpression.indexOf("=");
+
+                    if (equals != -1 && (colon == -1 || equals < colon)) {
+                        colon = equals;
+                    }
+
+                    List<String> keyList = subExpression.subList(0, colon);
+                    List<String> valueList = subExpression.subList(colon + 1, subExpression.size());
+
+                    postfixExpression.addAll(infixToPostfix(keyList));
+                    postfixExpression.add("=");
+                    postfixExpression.addAll(infixToPostfix(valueList));
+                }
+
+                postfixExpression.add("}");
+
+                i = end;
+
+                continue;
+            }
+
+            if (token.equals(",") || token.equals("?") || token.equals("=") || token.equals("[") || token.equals("]")) {
                 while (!operatorStack.isEmpty() && !operatorStack.peek().equals("(")) {
                     postfixExpression.add(operatorStack.pop());
                 }
@@ -1676,64 +1728,29 @@ public class Parser {
                 continue;
             }
 
-            else if (token.equals(":")) {
-                // The left token is in the stack, but the right token must be fetched. it's uh... complicated since its infix
-                ASTNode left = stack.pop();
-
-                List<String> rightTokens;
-
-                // look for either the next :, ; or uneven parenthesis
-                int end = -1;
-                int depth = 0;
-                for (int j = i + 1; j < postfix.size(); j++) {
-                    String t = postfix.get(j);
-                    if (t.equals("(")) {
-                        depth++;
-                    } else if (t.equals(")")) {
-                        depth--;
-                    }
-                    if (OperationType.fromSymbol(t) != null && depth == 0) {
-                        end = j;
-                        break;
-                    }
-                    else if (t.equals(";")) {
-                        end = j;
-                        break;
-                    }
-                    else if (depth < 0) {
-                        end = j;
-                        break;
-                    }
-                }
-
-                if(end == -1) {
-                    end = postfix.size();
-                }
-
-                rightTokens = postfix.subList(i + 1, end);
-
-                ASTNode right = postfixToAST(rightTokens, context);
-
-                stack.push(new ReferenceASTNode(left, right));
-
-                i = end - 1;
-
-                continue;
-            }
-
             else if (OperationType.fromSymbol(token) != null) {
                 ASTNode right = stack.pop();
                 ASTNode left = stack.pop();
                 OperationType operationType = OperationType.fromSymbol(token);
 
-                stack.push(new OperationASTNode(left, right, operationType));
+                if(operationType != OperationType.REF) {
+                    stack.push(new OperationASTNode(left, right, operationType));
 
-                // Preprocess the AST. If they're both values, then we can just evaluate them
-                if (left instanceof ValueASTNode && right instanceof ValueASTNode) {
-                    stack.push(new ValueASTNode(stack.pop().evaluate(null)));
+                    // Preprocess the AST. If they're both values, then we can just evaluate them
+                    if (left instanceof ValueASTNode && right instanceof ValueASTNode) {
+                        stack.push(new ValueASTNode(stack.pop().evaluate(null)));
+                    }
+
+                    continue;
+                } else {
+                    stack.push(new ReferenceASTNode(left, right));
+
+                    if(right instanceof ValueASTNode) {
+                        throw new ParsingException("Invalid reference");
+                    }
+
+                    continue;
                 }
-
-                continue;
             }
 
             else if (token.equals("?")) {
