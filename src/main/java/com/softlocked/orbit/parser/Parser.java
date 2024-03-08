@@ -44,7 +44,7 @@ public class Parser {
     }
 
     private static ASTNode parse(List<String> tokens, GlobalContext context, String clazzName) throws ParsingException {
-        BodyASTNode body = new BodyASTNode(new ArrayList<>());
+        BodyASTNode body = new BodyASTNode();
 
         // try {
         for (int i = 0; i < tokens.size(); i++) {
@@ -557,7 +557,7 @@ public class Parser {
                                                 identifier,
                                                 arguments.size(),
                                                 arguments,
-                                                new BodyASTNode(new ArrayList<>()),
+                                                new BodyASTNode(),
                                                 token.equals("func") ? Variable.Type.ANY : Variable.Type.fromJavaClass(GlobalContext.getPrimitiveType(token))
                                         ));
 
@@ -660,7 +660,7 @@ public class Parser {
                             body.addNode(new ClassConstructor(
                                     arguments.size(),
                                     arguments,
-                                    new BodyASTNode(new ArrayList<>())
+                                    new BodyASTNode()
                             ));
 
                             i = nextIndexC;
@@ -790,7 +790,7 @@ public class Parser {
                                                     identifier,
                                                     arguments.size(),
                                                     arguments,
-                                                    new BodyASTNode(new ArrayList<>()),
+                                                    new BodyASTNode(),
                                                     Variable.Type.CLASS
                                             ));
 
@@ -1285,7 +1285,7 @@ public class Parser {
                         elseNode = parse(elseBody, context);
 
                         if (elseNode instanceof BodyASTNode bd) {
-                            if(bd.statements().isEmpty()) elseNode = null;
+                            if(bd.statements().length == 0) elseNode = null;
                         }
                     }
                 } else {
@@ -1319,8 +1319,8 @@ public class Parser {
 //
 //        }
 
-        if(body.statements().size() == 1) {
-            return body.statements().get(0);
+        if(body.statements().length == 1) {
+            return body.statements()[0];
         } else {
             return body;
         }

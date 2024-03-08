@@ -664,6 +664,8 @@ public class Evaluator {
             return !str.isEmpty();
         } else if(o instanceof Character ch) {
             return ch != 0;
+        } else if(o instanceof OrbitObject) {
+            return (boolean) ((OrbitObject) o).callFunction("cast", List.of("bool"));
         } else {
             return o != null;
         }
