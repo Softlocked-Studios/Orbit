@@ -18,7 +18,7 @@ public class Eval_Library implements OrbitJavaLibrary {
         context.addFunction(new NativeFunction("delete", List.of(Variable.Type.STRING), Variable.Type.VOID) {
             @Override
             public Object call(ILocalContext context, List<Object> args) {
-                context.getParent().removeVariable((String) args.get(0));
+                context.removeVariable((String) args.get(0));
 
                 return null;
             }

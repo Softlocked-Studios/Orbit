@@ -4,6 +4,7 @@ import com.softlocked.orbit.core.ast.ASTNode;
 import com.softlocked.orbit.core.datatypes.Variable;
 import com.softlocked.orbit.core.datatypes.functions.IFunction;
 import com.softlocked.orbit.interpreter.function.ClassConstructor;
+import com.softlocked.orbit.interpreter.memory.GlobalContext;
 import com.softlocked.orbit.utils.Pair;
 
 import java.util.HashMap;
@@ -99,5 +100,9 @@ public class OrbitClass {
         }
 
         return false;
+    }
+
+    public OrbitObject createInstance(List<Object> args, GlobalContext rootContext) {
+        return new OrbitObject(this, args, rootContext);
     }
 }
