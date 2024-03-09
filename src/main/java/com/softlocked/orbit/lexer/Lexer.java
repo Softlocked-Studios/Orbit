@@ -99,21 +99,11 @@ public class Lexer {
                             }
 
                             if (token.equals("*") || token.equals(">") || token.equals("<")) {
-                                if (nextToken.equals(token)) {
+                                // Combine all next tokens that are the same as the current token
+                                while (nextToken.equals(token.charAt(0) + "") && i + 1 < tokens.size()) {
                                     tokens.set(i, token + token);
                                     tokens.remove(i + 1);
-
-                                    // If this is **, check if there's an = after it
-                                    if (tokens.get(i).equals("**")) {
-                                        if (i + 1 < tokens.size()) {
-                                            String nextNextToken = tokens.get(i + 1);
-
-                                            if (nextNextToken.equals("=")) {
-                                                tokens.set(i, token + token + "=");
-                                                tokens.remove(i + 1);
-                                            }
-                                        }
-                                    }
+                                    nextToken = tokens.get(i + 1);
                                 }
                             }
                         }
