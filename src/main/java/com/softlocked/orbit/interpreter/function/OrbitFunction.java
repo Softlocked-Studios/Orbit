@@ -16,13 +16,13 @@ import java.util.List;
  * @see IFunction
  */
 public class OrbitFunction implements IFunction {
-    private final String name;
-    private final int argsCount;
-    private final Variable.Type returnType;
+    protected final String name;
+    protected final int argsCount;
+    protected final Variable.Type returnType;
 
-    private final List<Pair<String, Variable.Type>> args = new ArrayList<>();
+    protected final List<Pair<String, Variable.Type>> args = new ArrayList<>();
 
-    private final ASTNode body;
+    protected final ASTNode body;
 
     public OrbitFunction(String name, ASTNode body, Variable.Type returnType) {
         this.name = name;

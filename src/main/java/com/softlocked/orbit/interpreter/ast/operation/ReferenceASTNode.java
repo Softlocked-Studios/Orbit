@@ -40,7 +40,7 @@ public record ReferenceASTNode(ASTNode param, ASTNode function) implements ASTNo
                 return orbitObject.callFunction(functionCall.name(), args, superCall);
             }
 
-            String name = type.getTypeName(left) + "." + functionCall.name();
+            String name = Variable.Type.getTypeName(left) + "." + functionCall.name();
 
             List<ASTNode> args = new ArrayList<>();
             args.add(new ValueASTNode(left));

@@ -15,7 +15,7 @@ public record TryCatchASTNode(ASTNode tryBlock, ASTNode catchBlock, String excep
     public Object evaluate(ILocalContext context) {
         try {
             Object result = tryBlock.evaluate(context);
-            if (result instanceof Breakpoint breakpoint) {
+            if (result instanceof Breakpoint breakpoint && breakpoint.getType() != Breakpoint.Type.YIELD) {
                 return breakpoint.getValue();
             }
 

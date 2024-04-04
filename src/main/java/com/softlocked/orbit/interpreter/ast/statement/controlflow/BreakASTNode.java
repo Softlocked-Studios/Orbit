@@ -19,9 +19,9 @@ public record BreakASTNode(Breakpoint.Type type, ASTNode value) implements ASTNo
             throw new InternalException(exception);
         }
         if(value != null) {
-            return new Breakpoint(type, value.evaluate(context));
+            return new Breakpoint(type, value.evaluate(context), this, context);
         } else {
-            return new Breakpoint(type);
+            return new Breakpoint(type, this, context);
         }
     }
 }

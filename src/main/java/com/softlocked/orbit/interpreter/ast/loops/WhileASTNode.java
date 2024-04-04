@@ -19,8 +19,8 @@ public record WhileASTNode(ASTNode condition, ASTNode body) implements ASTNode {
                 if(breakpoint.getType() == Breakpoint.Type.BREAK) {
                     return null;
                 }
-                if(breakpoint.getType() == Breakpoint.Type.RETURN) {
-                    return breakpoint.getValue();
+                if(breakpoint.getType() == Breakpoint.Type.RETURN || breakpoint.getType() == Breakpoint.Type.YIELD) {
+                    return breakpoint;
                 }
             }
         }

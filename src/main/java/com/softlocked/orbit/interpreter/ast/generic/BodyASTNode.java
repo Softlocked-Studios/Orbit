@@ -1,6 +1,7 @@
 package com.softlocked.orbit.interpreter.ast.generic;
 
 import com.softlocked.orbit.core.ast.ASTNode;
+import com.softlocked.orbit.core.datatypes.Variable;
 import com.softlocked.orbit.core.evaluator.Breakpoint;
 import com.softlocked.orbit.memory.ILocalContext;
 
@@ -13,12 +14,37 @@ public class BodyASTNode implements ASTNode {
         this.statements = new ASTNode[0];
     }
 
+    public BodyASTNode(List<ASTNode> statements) {
+        this.statements = statements.toArray(new ASTNode[0]);
+    }
+
     @Override
     public Object evaluate(ILocalContext context) {
         for (ASTNode node : statements) {
             Object result = node.evaluate(context);
 
-            if (result instanceof Breakpoint) {
+            if (result != null && !(result instanceof Variable)) {
+                return result;
+            }
+        }
+        return null;
+    }
+
+    public Object evaluateFrom(ILocalContext context, ASTNode from) {
+        int index = 0;
+        for (ASTNode node : statements) {
+            if (node == from) {
+                break;
+            }
+            index++;
+        }
+
+        for (int i = index+1; i < statements.length; i++) {
+            ASTNode node = statements[i];
+
+            Object result = node.evaluate(context);
+
+            if (result != null && !(result instanceof Variable)) {
                 return result;
             }
         }

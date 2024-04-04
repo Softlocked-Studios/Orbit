@@ -15,6 +15,8 @@ import com.softlocked.orbit.interpreter.ast.value.ValueASTNode;
 import com.softlocked.orbit.interpreter.ast.value.VariableASTNode;
 import com.softlocked.orbit.interpreter.ast.variable.DeleteVarASTNode;
 import com.softlocked.orbit.interpreter.function.ClassConstructor;
+import com.softlocked.orbit.interpreter.function.coroutine.Coroutine;
+import com.softlocked.orbit.interpreter.function.coroutine.CoroutineFunction;
 import com.softlocked.orbit.opm.ast.pkg.ImportFileASTNode;
 import com.softlocked.orbit.opm.ast.pkg.ImportModuleASTNode;
 import com.softlocked.orbit.utils.Pair;
@@ -134,6 +136,28 @@ public class Parser {
                 List<String> postfix = infixToPostfix(expression.first);
 
                 body.addNode(new BreakASTNode(Breakpoint.Type.RETURN, postfixToAST(postfix, context)));
+
+                i = expression.second;
+
+                continue;
+            }
+
+            else if(token.equals("yield")) {
+                String next = getNext(tokens, i + 1);
+                int nextIndex = findNext(tokens, i + 1, next);
+
+                if(next == null || next.equals(";")) {
+                    body.addNode(new BreakASTNode(Breakpoint.Type.YIELD, null));
+
+                    i = nextIndex;
+                    continue;
+                }
+
+                Pair<List<String>, Integer> expression = fetchExpression(tokens, nextIndex);
+
+                List<String> postfix = infixToPostfix(expression.first);
+
+                body.addNode(new BreakASTNode(Breakpoint.Type.YIELD, postfixToAST(postfix, context)));
 
                 i = expression.second;
 
@@ -583,13 +607,35 @@ public class Parser {
 
                                 ASTNode functionBody = parse(bodyTokens, context);
 
-                                body.addNode(new OrbitFunction(
-                                        identifier,
-                                        arguments.size(),
-                                        arguments,
-                                        functionBody,
-                                        token.equals("func") ? Variable.Type.ANY : Variable.Type.fromJavaClass(GlobalContext.getPrimitiveType(token))
-                                ));
+                                if(!(functionBody instanceof BodyASTNode)) {
+                                    functionBody = new BodyASTNode(List.of(functionBody));
+                                }
+
+                                if(token.equals("func")) {
+                                    body.addNode(new OrbitFunction(
+                                            identifier,
+                                            arguments.size(),
+                                            arguments,
+                                            functionBody,
+                                            Variable.Type.ANY
+                                    ));
+                                } else if (token.equals("coroutine")) {
+                                    body.addNode(new CoroutineFunction(
+                                            identifier,
+                                            arguments.size(),
+                                            arguments,
+                                            functionBody
+                                    ));
+                                }
+                                else {
+                                    body.addNode(new OrbitFunction(
+                                            identifier,
+                                            arguments.size(),
+                                            arguments,
+                                            functionBody,
+                                            Variable.Type.fromJavaClass(GlobalContext.getPrimitiveType(token))
+                                    ));
+                                }
 
                                 i = bodyEnd - 1;
 
@@ -684,6 +730,10 @@ public class Parser {
                     List<String> bodyTokens = tokens.subList(nextIndexC + 1, bodyEnd - 1);
 
                     ASTNode functionBody = parse(bodyTokens, context);
+
+                    if(!(functionBody instanceof BodyASTNode)) {
+                        functionBody = new BodyASTNode(List.of(functionBody));
+                    }
 
                     body.addNode(new ClassConstructor(
                             arguments.size(),
@@ -815,6 +865,10 @@ public class Parser {
                                     List<String> bodyTokens = tokens.subList(nextIndexC + 1, bodyEnd - 1);
 
                                     ASTNode functionBody = parse(bodyTokens, context);
+
+                                    if(!(functionBody instanceof BodyASTNode)) {
+                                        functionBody = new BodyASTNode(List.of(functionBody));
+                                    }
 
                                     body.addNode(new OrbitFunction(
                                             identifier,

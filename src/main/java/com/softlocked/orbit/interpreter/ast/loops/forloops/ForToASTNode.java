@@ -24,8 +24,8 @@ public record ForToASTNode(ASTNode init, ASTNode end, ASTNode body) implements A
                 if(breakpoint.getType() == Breakpoint.Type.BREAK) {
                     return null;
                 }
-                if(breakpoint.getType() == Breakpoint.Type.RETURN) {
-                    return breakpoint.getValue();
+                if(breakpoint.getType() == Breakpoint.Type.RETURN || breakpoint.getType() == Breakpoint.Type.YIELD) {
+                    return breakpoint;
                 }
             }
         }

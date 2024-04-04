@@ -1,6 +1,7 @@
 package com.softlocked.orbit.core.datatypes;
 
 import com.softlocked.orbit.core.datatypes.classes.OrbitObject;
+import com.softlocked.orbit.interpreter.function.coroutine.Coroutine;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -56,7 +57,8 @@ public class Variable {
         CLASS,
         LIST,
         MAP,
-        REFERENCE;
+        REFERENCE,
+        COROUTINE;
 
         public Class<?> getJavaClass() {
             return switch (this) {
@@ -76,6 +78,7 @@ public class Variable {
                 case LIST -> java.util.List.class;
                 case MAP -> java.util.Map.class;
                 case REFERENCE -> Variable.class;
+                case COROUTINE -> Coroutine.class;
             };
         }
 
@@ -89,18 +92,19 @@ public class Variable {
             else if (clazz == char.class || clazz == Character.class) return CHAR;
             else if (clazz == boolean.class || clazz == Boolean.class) return BOOL;
             else if (clazz == String.class) return STRING;
+            else if (clazz == Coroutine.class) return COROUTINE;
             else if (clazz == Object.class) return ANY;
             else if (clazz == void.class || clazz == Void.class) return VOID;
             else if (clazz == OrbitObject.class) return CLASS;
-            else if (clazz == java.util.List.class || clazz == ArrayList.class) return LIST;
-            else if (clazz == java.util.Map.class || clazz == HashMap.class) return MAP;
+            else if (clazz.isAssignableFrom(List.class)) return LIST;
+            else if (clazz.isAssignableFrom(Map.class)) return MAP;
             else if (clazz == Variable.class) return REFERENCE;
             // arrays
             else if (clazz.isArray()) return ARRAY;
             else return null;
         }
 
-        public String getTypeName(Object value) {
+        public static String getTypeName(Object value) {
             if (value == null) return "void";
             else if (value instanceof Integer) return "int";
             else if (value instanceof Float) return "float";
@@ -114,6 +118,7 @@ public class Variable {
             else if (value instanceof Object[]) return "array";
             else if (value instanceof List) return "list";
             else if (value instanceof Map) return "map";
+            else if (value instanceof Coroutine) return "coroutine";
             else if (value instanceof Variable) return "ref";
             else if (value instanceof OrbitObject orbitObject) {
                 return orbitObject.getClazz().getName();
@@ -144,6 +149,7 @@ public class Variable {
             case MAP -> { return "map"; }
             case REFERENCE -> { return "ref"; }
             case VOID -> { return "void"; }
+            case COROUTINE -> { return "coroutine"; }
             default -> { return "var"; }
         }
     }

@@ -58,9 +58,7 @@ public class Standard_Library implements OrbitJavaLibrary {
                     return "null";
                 }
 
-                Variable.Type type = Variable.Type.fromJavaClass(obj.getClass());
-
-                return type != null ? type.getTypeName(obj) : "void";
+                return Variable.Type.getTypeName(obj);
             }
         });
 
