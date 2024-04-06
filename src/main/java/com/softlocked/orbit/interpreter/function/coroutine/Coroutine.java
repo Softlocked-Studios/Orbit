@@ -111,6 +111,19 @@ public class Coroutine {
                     if (breakpoint.getType() == Breakpoint.Type.RETURN) {
                         finished = true;
                     }
+                    if (breakpoint.getType() == Breakpoint.Type.BREAK) {
+                        // Find the parent loop and break from it
+                        ASTNode loop = parent;
+
+                        while (!(loop instanceof WhileASTNode) && !(loop instanceof ForInASTNode) && !(loop instanceof ForToASTNode) && !(loop instanceof ForDowntoASTNode)) {
+                            result = findNode(body, loop);
+                            loop = result.first;
+
+                            if (loop instanceof ConditionalASTNode) {
+                                headContext = headContext == context ? context : headContext.getParent();
+                            }
+                        }
+                    }
                     return breakpoint.getValue();
                 }
             } else {
@@ -127,6 +140,19 @@ public class Coroutine {
                     }
                     if (breakpoint.getType() == Breakpoint.Type.RETURN) {
                         finished = true;
+                    }
+                    if (breakpoint.getType() == Breakpoint.Type.BREAK) {
+                        // Find the parent loop and break from it
+                        ASTNode loop = parent;
+
+                        while (!(loop instanceof WhileASTNode) && !(loop instanceof ForInASTNode) && !(loop instanceof ForToASTNode) && !(loop instanceof ForDowntoASTNode)) {
+                            result = findNode(body, loop);
+                            loop = result.first;
+
+                            if (loop instanceof ConditionalASTNode) {
+                                headContext = headContext == context ? context : headContext.getParent();
+                            }
+                        }
                     }
                     return breakpoint.getValue();
                 }
@@ -155,6 +181,19 @@ public class Coroutine {
             }
             if (breakpoint.getType() == Breakpoint.Type.RETURN) {
                 finished = true;
+            }
+            if (breakpoint.getType() == Breakpoint.Type.BREAK) {
+                // Find the parent loop and break from it
+                ASTNode loop = parent;
+
+                while (!(loop instanceof WhileASTNode) && !(loop instanceof ForInASTNode) && !(loop instanceof ForToASTNode) && !(loop instanceof ForDowntoASTNode)) {
+                    result = findNode(body, loop);
+                    loop = result.first;
+
+                    if (loop instanceof ConditionalASTNode) {
+                        headContext = headContext == context ? context : headContext.getParent();
+                    }
+                }
             }
             return breakpoint.getValue();
         }
