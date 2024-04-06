@@ -5,6 +5,7 @@ import com.softlocked.orbit.core.datatypes.Variable;
 import com.softlocked.orbit.core.evaluator.Breakpoint;
 import com.softlocked.orbit.memory.ILocalContext;
 
+import java.util.Arrays;
 import java.util.List;
 
 public class BodyASTNode implements ASTNode {
@@ -23,7 +24,7 @@ public class BodyASTNode implements ASTNode {
         for (ASTNode node : statements) {
             Object result = node.evaluate(context);
 
-            if (result != null && !(result instanceof Variable)) {
+            if (result instanceof Breakpoint) {
                 return result;
             }
         }
@@ -44,7 +45,7 @@ public class BodyASTNode implements ASTNode {
 
             Object result = node.evaluate(context);
 
-            if (result != null && !(result instanceof Variable)) {
+            if (result instanceof Breakpoint) {
                 return result;
             }
         }
@@ -60,5 +61,14 @@ public class BodyASTNode implements ASTNode {
         System.arraycopy(statements, 0, newStatements, 0, statements.length);
         newStatements[statements.length] = node;
         statements = newStatements;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        for (ASTNode node : statements) {
+            builder.append(node.toString()).append("\n");
+        }
+        return builder.toString();
     }
 }
