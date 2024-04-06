@@ -5,7 +5,6 @@ import com.softlocked.orbit.core.datatypes.Variable;
 import com.softlocked.orbit.core.datatypes.functions.IFunction;
 import com.softlocked.orbit.interpreter.function.ClassConstructor;
 import com.softlocked.orbit.interpreter.memory.GlobalContext;
-import com.softlocked.orbit.memory.ILocalContext;
 import com.softlocked.orbit.memory.LocalContext;
 import com.softlocked.orbit.utils.Pair;
 
@@ -24,8 +23,8 @@ public class OrbitObject {
         this.clazz = clazz;
 
         LocalContext context = new LocalContext(rootContext);
-        for (String field : clazz.getFields().keySet()) {
-            Pair<Variable.Type, ASTNode> fieldData = clazz.getFields().get(field);
+        for (String field : clazz.fields().keySet()) {
+            Pair<Variable.Type, ASTNode> fieldData = clazz.fields().get(field);
             if (fieldData.second != null) {
                 fields.put(field, new Variable(fieldData.first, fieldData.second.evaluate(context)));
             } else {
@@ -36,7 +35,7 @@ public class OrbitObject {
         fields.put("this", new Variable(Variable.Type.CLASS, this));
 
         if (args != null) {
-            HashMap<Integer, ClassConstructor> constructors = clazz.getConstructors();
+            HashMap<Integer, ClassConstructor> constructors = clazz.constructors();
 
             if(constructors.isEmpty() && args.isEmpty()) {
                 return;
@@ -50,7 +49,7 @@ public class OrbitObject {
 
                 constructors.get(args.size()).call(new LocalContext(context), args);
             } else {
-                throw new RuntimeException("No constructor found for " + clazz.getName() + " with " + args.size() + " arguments");
+                throw new RuntimeException("No constructor found for " + clazz.name() + " with " + args.size() + " arguments");
             }
         }
     }
@@ -68,7 +67,7 @@ public class OrbitObject {
     }
 
     public Object callFunction(String name, List<Object> args, boolean superCall) {
-        HashMap<Pair<String, Integer>, IFunction> functions = clazz.getFunctions();
+        HashMap<Pair<String, Integer>, IFunction> functions = clazz.functions();
 
         IFunction func = null;
 
@@ -87,9 +86,9 @@ public class OrbitObject {
             return func.call(context, args);
         }
 
-        if (clazz.getSuperClasses() != null) {
-            for (OrbitClass superClass : clazz.getSuperClasses()) {
-                func = superClass.getFunctions().get(new Pair<>(name, args.size()));
+        if (clazz.superClasses() != null) {
+            for (OrbitClass superClass : clazz.superClasses()) {
+                func = superClass.functions().get(new Pair<>(name, args.size()));
 
                 if (func != null) {
                     LocalContext context = new LocalContext(rootContext);
@@ -104,19 +103,19 @@ public class OrbitObject {
             }
         }
 
-        throw new RuntimeException("No function " + clazz.getName() + ":" + name + " with " + args.size() + " arguments found");
+        throw new RuntimeException("No function " + clazz.name() + ":" + name + " with " + args.size() + " arguments found");
     }
 
     public boolean hasFunction(String name, int argsCount) {
-        HashMap<Pair<String, Integer>, IFunction> functions = clazz.getFunctions();
+        HashMap<Pair<String, Integer>, IFunction> functions = clazz.functions();
 
         if (functions.containsKey(new Pair<>(name, argsCount))) {
             return true;
         }
 
-        if (clazz.getSuperClasses() != null) {
-            for (OrbitClass superClass : clazz.getSuperClasses()) {
-                if (superClass.getFunctions().containsKey(new Pair<>(name, argsCount))) {
+        if (clazz.superClasses() != null) {
+            for (OrbitClass superClass : clazz.superClasses()) {
+                if (superClass.functions().containsKey(new Pair<>(name, argsCount))) {
                     return true;
                 }
             }
@@ -131,6 +130,6 @@ public class OrbitObject {
 
         // Split by @ and add with the class name
         String[] split = res.split("@");
-        return clazz.getName() + "@" + split[1];
+        return clazz.name() + "@" + split[1];
     }
 }

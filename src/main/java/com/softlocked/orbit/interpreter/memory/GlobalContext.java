@@ -122,14 +122,14 @@ public class GlobalContext extends LocalContext {
     }
 
     public void addClass(OrbitClass orbitClass) {
-        if(classes.containsKey(orbitClass.getName()))
-            throw new RuntimeException("Class " + orbitClass.getName() + " already defined");
+        if(classes.containsKey(orbitClass.name()))
+            throw new RuntimeException("Class " + orbitClass.name() + " already defined");
 
-        classes.put(orbitClass.getName(), orbitClass);
+        classes.put(orbitClass.name(), orbitClass);
 
-        if(orbitClass.getConstructors().isEmpty()) {
+        if(orbitClass.constructors().isEmpty()) {
             addFunction(
-                    new NativeFunction(orbitClass.getName(), 0, Variable.Type.CLASS) {
+                    new NativeFunction(orbitClass.name(), 0, Variable.Type.CLASS) {
                         @Override
                         public Object call(ILocalContext context, List<Object> args) {
                             return new OrbitObject(orbitClass, null, context.getRoot());
@@ -137,10 +137,10 @@ public class GlobalContext extends LocalContext {
                     }
             );
         } else {
-            for (Map.Entry<Integer, ClassConstructor> entry : orbitClass.getConstructors().entrySet()) {
+            for (Map.Entry<Integer, ClassConstructor> entry : orbitClass.constructors().entrySet()) {
                 functions.put(
-                        new Pair<>(orbitClass.getName(), entry.getKey()),
-                        new NativeFunction(orbitClass.getName(), entry.getKey(), Variable.Type.CLASS) {
+                        new Pair<>(orbitClass.name(), entry.getKey()),
+                        new NativeFunction(orbitClass.name(), entry.getKey(), Variable.Type.CLASS) {
                             @Override
                             public Object call(ILocalContext context, List<Object> args) {
                                 return new OrbitObject(orbitClass, args, context.getRoot());

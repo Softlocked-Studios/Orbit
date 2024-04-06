@@ -22,7 +22,7 @@ public record DecObjASTNode(String variableName, ASTNode value, String clazz) im
         }
 
         if(!obj.getClazz().extendsClass(clazz)) {
-            throw new RuntimeException(obj.getClazz().getName() + " does not extend " + clazz.getName());
+            throw new RuntimeException(obj.getClazz().name() + " does not extend " + clazz.name());
         }
 
         Variable variable = new Variable(Variable.Type.CLASS, value);

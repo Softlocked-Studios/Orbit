@@ -456,6 +456,66 @@ public class Parser {
                 }
             }
 
+            else if (token.equals("enum")) {
+                String enumName = getNext(tokens, i + 1);
+                int enumNameIndex = findNext(tokens, i + 1, enumName);
+
+                if(enumName == null) {
+                    throw new ParsingException("Unexpected end of file");
+                }
+
+                if(!enumName.matches(Utils.IDENTIFIER_REGEX) || Utils.isKeyword(enumName)) {
+                    throw new ParsingException("Invalid enum name " + enumName);
+                }
+
+                String next = getNext(tokens, enumNameIndex + 1);
+                int nextIndex = findNext(tokens, enumNameIndex + 1, next);
+
+                if(next == null) {
+                    throw new ParsingException("Unexpected end of file");
+                }
+
+                if(!next.equals("{")) {
+                    throw new ParsingException("Invalid enum declaration");
+                }
+
+                int bodyEnd = getPair(tokens, nextIndex, "{", "}");
+
+                if(bodyEnd == -1) {
+                    throw new ParsingException("Unexpected end of file");
+                }
+
+                List<String> bodyTokens = tokens.subList(nextIndex + 1, bodyEnd);
+
+                List<String> enumValues = new ArrayList<>();
+
+                for(String bodyToken : bodyTokens) {
+                    if(bodyToken.equals(",") || bodyToken.equals(";")) {
+                        continue;
+                    }
+
+                    enumValues.add(bodyToken);
+                }
+
+                Map<String, Integer> enumValuesMap = new HashMap<>();
+
+                for(int j = 0; j < enumValues.size(); j++) {
+                    enumValuesMap.put(enumValues.get(j), j);
+                }
+
+                body.addNode(new DecVarASTNode(
+                        enumName,
+                        new ValueASTNode(
+                                enumValuesMap
+                        ),
+                        Variable.Type.MAP
+                ));
+
+                i = bodyEnd;
+
+                continue;
+            }
+
             // 1. Variable Declaration
             else if (GlobalContext.getPrimitiveType(token) != null || token.equals("func")) {
                 String identifier = getNext(tokens, i + 1);
@@ -893,7 +953,7 @@ public class Parser {
                 String next = getNext(tokens, i + 1);
                 int nextIndex = findNext(tokens, i + 1, next);
 
-                if(next != null) {
+                if(next != null && OperationType.fromSymbol(next) == null) {
                     ASTNode value;
                     Pair<List<String>, Integer> expression = null;
 

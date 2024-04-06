@@ -12,17 +12,13 @@ import java.util.List;
 
 /**
  * Used for representing a class in the Orbit language
+ *
  * @see Variable
  */
-public class OrbitClass {
-    private final String name;
-    private final List<OrbitClass> superClasses;
-
-    private final HashMap<String, Pair<Variable.Type, ASTNode>> fields;
-    private final HashMap<Pair<String, Integer>, IFunction> functions;
-
-    private final HashMap<Integer, ClassConstructor> constructors;
-
+public record OrbitClass(String name, List<OrbitClass> superClasses,
+                         HashMap<String, Pair<Variable.Type, ASTNode>> fields,
+                         HashMap<Pair<String, Integer>, IFunction> functions,
+                         HashMap<Integer, ClassConstructor> constructors) {
     public OrbitClass(String name, List<OrbitClass> superClasses, HashMap<String, Pair<Variable.Type, ASTNode>> fields, HashMap<Pair<String, Integer>, IFunction> functions, HashMap<Integer, ClassConstructor> constructors) {
         this.name = name;
         this.superClasses = superClasses;
@@ -31,12 +27,12 @@ public class OrbitClass {
         this.constructors = constructors;
 
         // Add fields from super classes if they are not overridden
-        if(superClasses != null) {
+        if (superClasses != null) {
             for (OrbitClass superClass : superClasses) {
-                if(superClass.getFields() != null) {
-                    for (String s : superClass.getFields().keySet()) {
-                        if(!this.fields.containsKey(s)) {
-                            this.fields.put(s, superClass.getFields().get(s));
+                if (superClass.fields() != null) {
+                    for (String s : superClass.fields().keySet()) {
+                        if (!this.fields.containsKey(s)) {
+                            this.fields.put(s, superClass.fields().get(s));
                         }
                     }
                 }
@@ -44,12 +40,12 @@ public class OrbitClass {
         }
 
         // Add constructors from super classes if they are not overridden
-        if(superClasses != null) {
+        if (superClasses != null) {
             for (OrbitClass superClass : superClasses) {
-                if(superClass.getConstructors() != null) {
-                    for (Integer integer : superClass.getConstructors().keySet()) {
-                        if(!this.constructors.containsKey(integer)) {
-                            this.constructors.put(integer, superClass.getConstructors().get(integer));
+                if (superClass.constructors() != null) {
+                    for (Integer integer : superClass.constructors().keySet()) {
+                        if (!this.constructors.containsKey(integer)) {
+                            this.constructors.put(integer, superClass.constructors().get(integer));
                         }
                     }
                 }
@@ -57,32 +53,12 @@ public class OrbitClass {
         }
     }
 
-    public String getName() {
-        return name;
-    }
-
-    public List<OrbitClass> getSuperClasses() {
-        return superClasses;
-    }
-
-    public HashMap<String, Pair<Variable.Type, ASTNode>> getFields() {
-        return fields;
-    }
-
-    public HashMap<Pair<String, Integer>, IFunction> getFunctions() {
-        return functions;
-    }
-
-    public HashMap<Integer, ClassConstructor> getConstructors() {
-        return constructors;
-    }
-
     public boolean extendsClass(OrbitClass clazz) {
-        if(this.equals(clazz)) {
+        if (this.equals(clazz)) {
             return true;
         }
 
-        if(this.superClasses != null) {
+        if (this.superClasses != null) {
             for (OrbitClass superClass : this.superClasses) {
                 if (superClass.extendsClass(clazz)) {
                     return true;
@@ -95,8 +71,8 @@ public class OrbitClass {
 
     @Override
     public boolean equals(Object obj) {
-        if(obj instanceof OrbitClass clazz) {
-            return clazz.getName().equals(this.name);
+        if (obj instanceof OrbitClass clazz) {
+            return clazz.name().equals(this.name);
         }
 
         return false;

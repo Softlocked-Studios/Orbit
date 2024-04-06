@@ -3,8 +3,6 @@ package com.softlocked.orbit.core.datatypes;
 import com.softlocked.orbit.core.datatypes.classes.OrbitObject;
 import com.softlocked.orbit.interpreter.function.coroutine.Coroutine;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -121,7 +119,7 @@ public class Variable {
             else if (value instanceof Coroutine) return "coroutine";
             else if (value instanceof Variable) return "ref";
             else if (value instanceof OrbitObject orbitObject) {
-                return orbitObject.getClazz().getName();
+                return orbitObject.getClazz().name();
             }
             else return "var";
         }
@@ -141,7 +139,7 @@ public class Variable {
             case ARRAY -> { return "array"; }
             case CLASS, ANY -> {
                 if (value instanceof OrbitObject) {
-                    return ((OrbitObject) value).getClazz().getName();
+                    return ((OrbitObject) value).getClazz().name();
                 }
                 return "class";
             }

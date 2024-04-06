@@ -11,6 +11,7 @@ import com.softlocked.orbit.memory.ILocalContext;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public record ReferenceASTNode(ASTNode param, ASTNode function) implements ASTNode {
     @Override
@@ -53,6 +54,10 @@ public record ReferenceASTNode(ASTNode param, ASTNode function) implements ASTNo
         } else if(function instanceof VariableASTNode variableASTNode) {
             if(left instanceof OrbitObject orbitObject) {
                 return orbitObject.getField(variableASTNode.name()).getValue();
+            }
+
+            else if(left instanceof Map<?,?> map) {
+                return map.get(variableASTNode.name());
             }
 
             throw new RuntimeException("Invalid operation");
