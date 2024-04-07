@@ -132,4 +132,14 @@ public class OrbitObject {
         String[] split = res.split("@");
         return clazz.name() + "@" + split[1];
     }
+
+    public Object clone() {
+        OrbitObject obj = new OrbitObject(clazz, null, rootContext);
+
+        for (String field : fields.keySet()) {
+            obj.fields.put(field, fields.get(field));
+        }
+
+        return obj;
+    }
 }

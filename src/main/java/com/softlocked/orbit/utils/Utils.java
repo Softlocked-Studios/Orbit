@@ -3,6 +3,7 @@ package com.softlocked.orbit.utils;
 import com.google.gson.Gson;
 import com.softlocked.orbit.core.datatypes.Variable;
 import com.softlocked.orbit.core.datatypes.classes.OrbitObject;
+import com.softlocked.orbit.core.evaluator.Evaluator;
 
 import java.util.*;
 import java.util.regex.Matcher;
@@ -41,6 +42,8 @@ public class Utils {
             return 6;
         } else if(type == Byte.class || other == Byte.class) {
             return 7;
+        } else if(type == Boolean.class || other == Boolean.class) {
+            return 8;
         } else {
             return 0;
         }
@@ -172,15 +175,7 @@ public class Utils {
                 return b.callFunction("cast", List.of("char"));
             }
         } else if(target.equals(Boolean.class) || target.equals(boolean.class)) {
-            if(original instanceof String) {
-                return Boolean.parseBoolean((String) original);
-            } else if(original instanceof Number) {
-                return ((Number) original).intValue() != 0;
-            } else if(original instanceof Character) {
-                return (char) original != 0;
-            } else if(original instanceof OrbitObject b) {
-                return b.callFunction("cast", List.of("bool"));
-            }
+            return Evaluator.toBool(original);
         } else if(target.equals(String.class)) {
             if(original instanceof Map) {
                 Gson gson = new Gson();

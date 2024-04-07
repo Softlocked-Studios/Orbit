@@ -1427,7 +1427,7 @@ public class Parser {
 
             body.addNode(postfixToAST(postfix, context));
 
-            i = expression.second + 1;
+            i = expression.second;
         }
 //        } // catch (IndexOutOfBoundsException e) {
 //
@@ -1586,11 +1586,18 @@ public class Parser {
     public static Pair<List<String>, Integer> fetchExpression(List<String> tokens, int start) throws ParsingException {
         List<String> expression = new ArrayList<>();
 
+        boolean awaitingOperator = false;
+        boolean awaitingStartOperator = true;
+        boolean awaitingOperand = true;
+
+        boolean end = false;
+
         int i;
         for (i = start; i < tokens.size(); i++) {
             String token = getNext(tokens, i);
 
             if (token == null || token.equals(";")) {
+                end = true;
                 i--;
                 break;
             }
@@ -1599,57 +1606,63 @@ public class Parser {
                 continue;
             }
 
-            switch (token) {
-                case "(":
-                case "[":
-                case "{":
-                    String e = token.equals("(") ? ")" : (token.equals("[") ? "]" : "}");
-                    int getPair = getPair(tokens, i, token, e);
+            boolean b = token.equals("!") || token.equals("~") || token.equals("@");
 
-                    if (getPair == -1) {
-                        throw new ParsingException("Unmatched parenthesis");
-                    }
-
-                    List<String> subExpression = tokens.subList(i + 1, getPair);
-                    subExpression.removeIf(s -> s.equals("\n") || s.equals("\r"));
-
-                    expression.add(token);
-                    Pair<List<String>, Integer> subExpressionResult = fetchExpression(subExpression, 0);
-                    expression.addAll(subExpressionResult.first);
-                    expression.add(e);
-
-                    i = getPair;
-
-                    break;
-                default:
-                    expression.add(token);
-                    break;
+            if (awaitingStartOperator && b) {
+                expression.add(token);
+                continue;
             }
 
-            if (i + 1 < tokens.size()) {
-                String next = getNext(tokens, i + 1);
-
-                if (next == null || next.equals(";")) {
-                    break;
-                }
-                if (next.equals("(")) {
-                    continue;
-                }
-                int nextIndex = findNext(tokens, i + 1, next);
-                if (next.equals(",") || next.equals("?") || next.equals("=") || (OperationType.fromSymbol(next) != null && !next.equals("!") && !next.equals("~"))) {
-                    expression.add(next);
-                    i = nextIndex;
-                } else {
-                    break;
-                }
-            } else {
-                break;
+            if (awaitingOperator && !b && (OperationType.fromSymbol(token) != null || token.equals(",") || token.equals("=") || token.equals("?"))) {
+                expression.add(token);
+                awaitingOperand = true;
+                awaitingOperator = false;
+                awaitingStartOperator = true;
+                continue;
             }
+
+            boolean b1 = token.equals("(") || token.equals("[") || token.equals("{");
+            if (awaitingOperand && !b1) {
+                expression.add(token);
+                awaitingOperator = true;
+                awaitingOperand = false;
+                awaitingStartOperator = false;
+                continue;
+            }
+
+            if (b1) {
+                String e = token.equals("(") ? ")" : (token.equals("[") ? "]" : "}");
+                int getPair = getPair(tokens, i, token, e);
+
+                awaitingOperator = true;
+                awaitingOperand = false;
+                awaitingStartOperator = false;
+
+                if (getPair == -1) {
+                    throw new ParsingException("Unmatched parenthesis");
+                }
+
+                List<String> subExpression = tokens.subList(i + 1, getPair);
+                subExpression.removeIf(s -> s.equals("\n") || s.equals("\r"));
+
+                expression.add(token);
+
+                Pair<List<String>, Integer> subExpressionResult = fetchExpression(subExpression, 0);
+                expression.addAll(subExpressionResult.first);
+                expression.add(e);
+
+                i = getPair;
+
+                continue;
+            }
+
+            break;
         }
+
+        if(awaitingOperator && !end) i--;
 
         return new Pair<>(expression, i);
     }
-
 
     public static List<String> infixToPostfix(List<String> infix) {
         List<String> postfixExpression = new ArrayList<>();
@@ -1710,11 +1723,33 @@ public class Parser {
                 continue;
             }
 
-            if (token.equals(",") || token.equals("?") || token.equals("=") || token.equals("[") || token.equals("]")) {
+            if (token.equals("[")) {
+                int end = getPair(infix, i, "[", "]");
+
+                postfixExpression.add("[");
+
+                List<String> subExpression = new ArrayList<>(infix.subList(i + 1, end));
+
+                // For the time being just add everything as it is
+                postfixExpression.addAll(subExpression);
+
+                postfixExpression.add("]");
+
+                i = end;
+
+                continue;
+            }
+
+            else if (token.equals(",") || token.equals("?") || token.equals("=")) {
                 while (!operatorStack.isEmpty() && !operatorStack.peek().equals("(")) {
                     postfixExpression.add(operatorStack.pop());
                 }
                 postfixExpression.add(token);
+                continue;
+            }
+
+            else if (token.equals("!") || token.equals("~") || token.equals("@")) {
+                operatorStack.push(token);
                 continue;
             }
 
@@ -1768,7 +1803,6 @@ public class Parser {
         while (!operatorStack.isEmpty()) {
             postfixExpression.add(operatorStack.pop());
         }
-
 
         return postfixExpression;
     }
@@ -1830,13 +1864,15 @@ public class Parser {
                 continue;
             }
 
-            else if (token.equals("!") || token.equals("~")) {
+            else if (token.equals("!") || token.equals("~") || token.equals("@")) {
                 ASTNode node = stack.pop();
 
+                OperationASTNode operation = new OperationASTNode(node, null, OperationType.fromSymbol(token));
+
                 if (node instanceof ValueASTNode) {
-                    stack.push(new ValueASTNode(node.evaluate(null)));
+                    stack.push(new ValueASTNode(operation.evaluate(null)));
                 } else {
-                    stack.push(new OperationASTNode(node, new ValueASTNode(null), OperationType.fromSymbol(token)));
+                    stack.push(operation);
                 }
 
                 continue;
@@ -2096,7 +2132,7 @@ public class Parser {
             case "*", "/", "%" -> 9;
             case "**" -> 10;
             case "~", "!" -> 11;
-            case ":" -> 12;
+            case ":", "@" -> 12;
             default -> -1;
         };
     }

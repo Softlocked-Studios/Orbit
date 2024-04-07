@@ -28,6 +28,13 @@ public class Coroutine_Library implements OrbitJavaLibrary {
             }
         });
 
+        context.addFunction(new NativeFunction("coroutine.hasNext", List.of(Variable.Type.COROUTINE), Variable.Type.BOOL) {
+            @Override
+            public Object call(ILocalContext context, List<Object> args) {
+                return !((Coroutine) args.get(0)).isFinished();
+            }
+        });
+
         context.addFunction(new NativeFunction("coroutine.clone", List.of(Variable.Type.COROUTINE), Variable.Type.COROUTINE) {
             @Override
             public Object call(ILocalContext context, List<Object> args) {
@@ -41,7 +48,12 @@ public class Coroutine_Library implements OrbitJavaLibrary {
         context.addFunction(new NativeFunction("coroutine.iterator", List.of(Variable.Type.COROUTINE), Variable.Type.LIST) {
             @Override
             public Object call(ILocalContext context, List<Object> args) {
-                return new CoroutineList((Coroutine) args.get(0));
+                LocalContext newContext = new LocalContext(context.getRoot());
+                Coroutine coroutine = (Coroutine) args.get(0);
+
+                Coroutine newCoroutine = (Coroutine) coroutine.getFunction().call(newContext, coroutine.getArgs());
+
+                return new CoroutineList(newCoroutine);
             }
         });
     }

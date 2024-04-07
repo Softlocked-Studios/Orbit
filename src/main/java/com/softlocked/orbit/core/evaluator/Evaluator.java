@@ -1,20 +1,59 @@
 package com.softlocked.orbit.core.evaluator;
 
 import com.softlocked.orbit.core.datatypes.classes.OrbitObject;
+import com.softlocked.orbit.interpreter.function.coroutine.Coroutine;
+import com.softlocked.orbit.memory.ILocalContext;
+import com.softlocked.orbit.memory.LocalContext;
 import com.softlocked.orbit.utils.Utils;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * The evaluator is used to evaluate expressions and statements
  */
 public class Evaluator {
+    public static Object cloneObject(Object a) {
+        if(!(a instanceof OrbitObject)) {
+            if (a instanceof String) {
+                return new String((String) a);
+            } else if (a instanceof Double) {
+                return (double) a;
+            } else if (a instanceof Float) {
+                return (float) a;
+            } else if (a instanceof Long) {
+                return (long) a;
+            } else if (a instanceof Integer) {
+                return (int) a;
+            } else if (a instanceof Character) {
+                return (char) a;
+            } else if (a instanceof Short) {
+                return (short) a;
+            } else if (a instanceof Byte) {
+                return (byte) a;
+            } else if (a instanceof Boolean) {
+                return (boolean) a;
+            } else if (a instanceof List<?>) {
+                return List.copyOf((List<?>) a);
+            } else if (a instanceof Object[]) {
+                return ((Object[]) a).clone();
+            } else if (a instanceof Map<?, ?>) {
+                return Map.copyOf((Map<?, ?>) a);
+            } else if (a instanceof Coroutine original) {
+                LocalContext context = new LocalContext(original.getContext().getRoot());
+                return new Coroutine(context, original.getFunction(), original.getArgs());
+            }
+            throw new RuntimeException("Cannot clone " + a.getClass().getSimpleName());
+        } else {
+            return ((OrbitObject) a).callFunction("clone", List.of());
+        }
+    }
     public static Object add(Object a, Object b) {
         if(!(a instanceof OrbitObject)) {
-            boolean stringConcat = a instanceof String || b instanceof String;
+            boolean stringConcat = a instanceof String || b instanceof String || a instanceof List<?> || b instanceof List<?> || a instanceof Map<?, ?> || b instanceof Map<?, ?>;
 
             if (stringConcat) {
-                return a.toString() + b.toString();
+                return (String) Utils.cast(a, String.class) + Utils.cast(b, String.class);
             }
 
             int priority = Utils.getPriority(a.getClass(), b.getClass());
@@ -40,6 +79,9 @@ public class Evaluator {
                 }
                 case 7 -> {
                     return (byte) Utils.cast(a, Byte.class) + (byte) Utils.cast(b, Byte.class);
+                }
+                case 8 -> {
+                    return (int) Utils.cast(toBool(a), Integer.class) + (int) Utils.cast(toBool(b), Integer.class);
                 }
                 default -> {
                     throw new RuntimeException("Cannot add " + a.getClass().getSimpleName() + " and " + b.getClass().getSimpleName());
@@ -76,6 +118,9 @@ public class Evaluator {
                 case 7 -> {
                     return (byte) Utils.cast(a, Byte.class) - (byte) Utils.cast(b, Byte.class);
                 }
+                case 8 -> {
+                    return (int) Utils.cast(toBool(a), Integer.class) - (int) Utils.cast(toBool(b), Integer.class);
+                }
                 default -> {
                     throw new RuntimeException("Cannot subtract " + a.getClass().getSimpleName() + " and " + b.getClass().getSimpleName());
                 }
@@ -110,6 +155,9 @@ public class Evaluator {
                 }
                 case 7 -> {
                     return (byte) Utils.cast(a, Byte.class) * (byte) Utils.cast(b, Byte.class);
+                }
+                case 8 -> {
+                    return (int) Utils.cast(toBool(a), Integer.class) * (int) Utils.cast(toBool(b), Integer.class);
                 }
                 default -> {
                     throw new RuntimeException("Cannot multiply " + a.getClass().getSimpleName() + " and " + b.getClass().getSimpleName());
@@ -146,6 +194,9 @@ public class Evaluator {
                 case 7 -> {
                     return (byte) Utils.cast(a, Byte.class) / (byte) Utils.cast(b, Byte.class);
                 }
+                case 8 -> {
+                    return (int) Utils.cast(toBool(a), Integer.class) / (int) Utils.cast(toBool(b), Integer.class);
+                }
                 default -> {
                     throw new RuntimeException("Cannot divide " + a.getClass().getSimpleName() + " and " + b.getClass().getSimpleName());
                 }
@@ -180,6 +231,9 @@ public class Evaluator {
                 }
                 case 7 -> {
                     return (byte) Utils.cast(a, Byte.class) % (byte) Utils.cast(b, Byte.class);
+                }
+                case 8 -> {
+                    return (int) Utils.cast(toBool(a), Integer.class) % (int) Utils.cast(toBool(b), Integer.class);
                 }
                 default -> {
                     throw new RuntimeException("Cannot modulo " + a.getClass().getSimpleName() + " and " + b.getClass().getSimpleName());
@@ -216,6 +270,9 @@ public class Evaluator {
                 case 7 -> {
                     return Math.pow((byte) Utils.cast(a, Byte.class), (byte) Utils.cast(b, Byte.class));
                 }
+                case 8 -> {
+                    return Math.pow((int) Utils.cast(toBool(a), Integer.class), (int) Utils.cast(toBool(b), Integer.class));
+                }
                 default -> {
                     throw new RuntimeException("Cannot power " + a.getClass().getSimpleName() + " and " + b.getClass().getSimpleName());
                 }
@@ -236,6 +293,10 @@ public class Evaluator {
             // strings
             if(a instanceof String || b instanceof String) {
                 return a.toString().equals(b.toString());
+            }
+
+            if(a instanceof List<?> || b instanceof List<?> || a instanceof Map<?, ?> || b instanceof Map<?, ?>) {
+                return a.equals(b);
             }
 
             int priority = Utils.getPriority(a.getClass(), b.getClass());
@@ -262,6 +323,9 @@ public class Evaluator {
                 case 7 -> {
                     return Utils.cast(a, Byte.class).equals(Utils.cast(b, Byte.class));
                 }
+                case 8 -> {
+                    return toBool(a) == toBool(b);
+                }
                 default -> {
                     throw new RuntimeException("Cannot compare " + a.getClass().getSimpleName() + " and " + b.getClass().getSimpleName());
                 }
@@ -282,6 +346,10 @@ public class Evaluator {
             // strings
             if(a instanceof String || b instanceof String) {
                 return !a.toString().equals(b.toString());
+            }
+
+            if(a instanceof List<?> || b instanceof List<?> || a instanceof Map<?, ?> || b instanceof Map<?, ?>) {
+                return !a.equals(b);
             }
 
             int priority = Utils.getPriority(a.getClass(), b.getClass());
@@ -307,6 +375,9 @@ public class Evaluator {
                 }
                 case 7 -> {
                     return !Utils.cast(a, Byte.class).equals(Utils.cast(b, Byte.class));
+                }
+                case 8 -> {
+                    return toBool(a) != toBool(b);
                 }
                 default -> {
                     throw new RuntimeException("Cannot compare " + a.getClass().getSimpleName() + " and " + b.getClass().getSimpleName());
@@ -343,6 +414,9 @@ public class Evaluator {
                 case 7 -> {
                     return (byte) Utils.cast(a, Byte.class) > (byte) Utils.cast(b, Byte.class);
                 }
+                case 8 -> {
+                    return (int) Utils.cast(toBool(a), Integer.class) > (int) Utils.cast(toBool(b), Integer.class);
+                }
                 default -> {
                     throw new RuntimeException("Cannot compare " + a.getClass().getSimpleName() + " and " + b.getClass().getSimpleName());
                 }
@@ -377,6 +451,9 @@ public class Evaluator {
                 }
                 case 7 -> {
                     return (byte) Utils.cast(a, Byte.class) < (byte) Utils.cast(b, Byte.class);
+                }
+                case 8 -> {
+                    return (int) Utils.cast(toBool(a), Integer.class) < (int) Utils.cast(toBool(b), Integer.class);
                 }
                 default -> {
                     throw new RuntimeException("Cannot compare " + a.getClass().getSimpleName() + " and " + b.getClass().getSimpleName());
@@ -413,6 +490,9 @@ public class Evaluator {
                 case 7 -> {
                     return (byte) Utils.cast(a, Byte.class) >= (byte) Utils.cast(b, Byte.class);
                 }
+                case 8 -> {
+                    return (int) Utils.cast(toBool(a), Integer.class) >= (int) Utils.cast(toBool(b), Integer.class);
+                }
                 default -> {
                     throw new RuntimeException("Cannot compare " + a.getClass().getSimpleName() + " and " + b.getClass().getSimpleName());
                 }
@@ -448,6 +528,9 @@ public class Evaluator {
                 case 7 -> {
                     return (byte) Utils.cast(a, Byte.class) <= (byte) Utils.cast(b, Byte.class);
                 }
+                case 8 -> {
+                    return (int) Utils.cast(toBool(a), Integer.class) <= (int) Utils.cast(toBool(b), Integer.class);
+                }
                 default -> {
                     throw new RuntimeException("Cannot compare " + a.getClass().getSimpleName() + " and " + b.getClass().getSimpleName());
                 }
@@ -459,7 +542,7 @@ public class Evaluator {
 
     public static Object and(Object a, Object b) {
         if(!(a instanceof OrbitObject)) {
-            return (boolean) Utils.cast(a, Boolean.class) && (boolean) Utils.cast(b, Boolean.class);
+            return toBool(a) && toBool(b);
         } else {
             return ((OrbitObject) a).callFunction("&&", List.of(b));
         }
@@ -467,7 +550,7 @@ public class Evaluator {
 
     public static Object or(Object a, Object b) {
         if(!(a instanceof OrbitObject)) {
-            return (boolean) Utils.cast(a, Boolean.class) || (boolean) Utils.cast(b, Boolean.class);
+            return toBool(a) || toBool(b);
         } else {
             return ((OrbitObject) a).callFunction("||", List.of(b));
         }
@@ -475,7 +558,7 @@ public class Evaluator {
 
     public static Object not(Object a) {
         if(!(a instanceof OrbitObject)) {
-            return !(boolean) Utils.cast(a, Boolean.class);
+            return !(boolean) toBool(a);
         } else {
             return ((OrbitObject) a).callFunction("!", List.of());
         }
@@ -500,6 +583,9 @@ public class Evaluator {
                 }
                 case 7 -> {
                     return (byte) Utils.cast(a, Byte.class) & (byte) Utils.cast(b, Byte.class);
+                }
+                case 8 -> {
+                    return (int) Utils.cast(toBool(a), Integer.class) & (int) Utils.cast(toBool(b), Integer.class);
                 }
                 default -> {
                     throw new RuntimeException("Cannot bitwise and " + a.getClass().getSimpleName() + " and " + b.getClass().getSimpleName());
@@ -530,6 +616,9 @@ public class Evaluator {
                 case 7 -> {
                     return (byte) Utils.cast(a, Byte.class) | (byte) Utils.cast(b, Byte.class);
                 }
+                case 8 -> {
+                    return (int) Utils.cast(toBool(a), Integer.class) | (int) Utils.cast(toBool(b), Integer.class);
+                }
                 default -> {
                     throw new RuntimeException("Cannot bitwise or " + a.getClass().getSimpleName() + " and " + b.getClass().getSimpleName());
                 }
@@ -558,6 +647,9 @@ public class Evaluator {
                 }
                 case 7 -> {
                     return (byte) Utils.cast(a, Byte.class) ^ (byte) Utils.cast(b, Byte.class);
+                }
+                case 8 -> {
+                    return (int) Utils.cast(toBool(a), Integer.class) ^ (int) Utils.cast(toBool(b), Integer.class);
                 }
                 default -> {
                     throw new RuntimeException("Cannot bitwise xor " + a.getClass().getSimpleName() + " and " + b.getClass().getSimpleName());
@@ -588,6 +680,9 @@ public class Evaluator {
                 case 7 -> {
                     return ~(byte) Utils.cast(a, Byte.class);
                 }
+                case 8 -> {
+                    return ~(int) Utils.cast(toBool(a), Integer.class);
+                }
                 default -> {
                     throw new RuntimeException("Cannot bitwise not " + a.getClass().getSimpleName());
                 }
@@ -616,6 +711,9 @@ public class Evaluator {
                 }
                 case 7 -> {
                     return (byte) Utils.cast(a, Byte.class) << (byte) Utils.cast(b, Byte.class);
+                }
+                case 8 -> {
+                    return (int) Utils.cast(toBool(a), Integer.class) << (int) Utils.cast(toBool(b), Integer.class);
                 }
                 default -> {
                     throw new RuntimeException("Cannot bitwise left shift " + a.getClass().getSimpleName() + " and " + b.getClass().getSimpleName());
@@ -646,6 +744,9 @@ public class Evaluator {
                 case 7 -> {
                     return (byte) Utils.cast(a, Byte.class) >> (byte) Utils.cast(b, Byte.class);
                 }
+                case 8 -> {
+                    return (int) Utils.cast(toBool(a), Integer.class) >> (int) Utils.cast(toBool(b), Integer.class);
+                }
                 default -> {
                     throw new RuntimeException("Cannot bitwise right shift " + a.getClass().getSimpleName() + " and " + b.getClass().getSimpleName());
                 }
@@ -666,8 +767,18 @@ public class Evaluator {
             return ch != 0;
         } else if(o instanceof OrbitObject) {
             return (boolean) ((OrbitObject) o).callFunction("cast", List.of("bool"));
+        } else if(o instanceof List) {
+            return !((List<?>) o).isEmpty();
+        } else if(o instanceof Map) {
+            return !((Map<?, ?>) o).isEmpty();
+        } else if(o instanceof Coroutine c) {
+            return !c.isFinished();
         } else {
             return o != null;
         }
+    }
+
+    public static Object customOverload(Object a, Object b, String operator) {
+        return ((OrbitObject) a).callFunction(operator, List.of(b));
     }
 }

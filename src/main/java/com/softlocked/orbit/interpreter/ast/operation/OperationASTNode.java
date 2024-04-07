@@ -11,6 +11,18 @@ public record OperationASTNode(ASTNode left, ASTNode right, OperationType type) 
     public Object evaluate(ILocalContext context) {
         Object left = this.left().evaluate(context);
 
+        switch (this.type()) {
+            case NOT -> {
+                return Evaluator.not(left);
+            }
+            case BITWISE_NOT -> {
+                return Evaluator.bitwiseNot(left);
+            }
+            case CLONE -> {
+                return Evaluator.cloneObject(left);
+            }
+        }
+
         Object right = this.right().evaluate(context);
 
         try {
@@ -60,9 +72,6 @@ public record OperationASTNode(ASTNode left, ASTNode right, OperationType type) 
                 case OR -> {
                     return Evaluator.or(left, right);
                 }
-                case NOT -> {
-                    return Evaluator.not(left);
-                }
                 // Bitwise operations
                 case BITWISE_AND -> {
                     return Evaluator.bitwiseAnd(left, right);
@@ -73,16 +82,15 @@ public record OperationASTNode(ASTNode left, ASTNode right, OperationType type) 
                 case BITWISE_XOR -> {
                     return Evaluator.bitwiseXor(left, right);
                 }
-                case BITWISE_NOT -> {
-                    return Evaluator.bitwiseNot(left);
-                }
                 case BITWISE_LEFT_SHIFT -> {
                     return Evaluator.bitwiseLeftShift(left, right);
                 }
                 case BITWISE_RIGHT_SHIFT -> {
                     return Evaluator.bitwiseRightShift(left, right);
                 }
-                default -> throw new RuntimeException("Unknown operation type: " + this.type());
+                default -> {
+                    return Evaluator.customOverload(left, right, this.type().getSymbol());
+                }
             }
         } catch (RuntimeException e) {
             throw e;
