@@ -45,7 +45,7 @@ public class CollectionAccessASTNode implements ASTNode {
                 throw new RuntimeException("Invalid number of indices for map access");
             }
         } else if (collection instanceof OrbitObject obj) {
-            return obj.callFunction("[]", List.of(indices));
+            return obj.callFunction("collection.get", List.of(indices));
         } else {
             throw new RuntimeException("Invalid collection type for access");
         }

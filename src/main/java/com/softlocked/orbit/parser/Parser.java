@@ -2089,7 +2089,7 @@ public class Parser {
                 if (i - 1 >= 0) {
                     String last = postfix.get(i - 1);
 
-                    if (last.matches(Utils.IDENTIFIER_REGEX)) {
+                    if (last.matches(Utils.IDENTIFIER_REGEX) || last.equals("]") || last.equals(")") || last.equals("}")) {
                         ASTNode array = stack.pop();
 
                         List<List<String>> indexes = new ArrayList<>();
