@@ -14,6 +14,7 @@ import com.softlocked.orbit.interpreter.ast.operation.ReferenceASTNode;
 import com.softlocked.orbit.interpreter.ast.value.ValueASTNode;
 import com.softlocked.orbit.interpreter.ast.value.VariableASTNode;
 import com.softlocked.orbit.interpreter.ast.variable.DeleteVarASTNode;
+import com.softlocked.orbit.interpreter.ast.variable.collection.CollectionAccessASTNode;
 import com.softlocked.orbit.interpreter.function.ClassConstructor;
 import com.softlocked.orbit.interpreter.function.coroutine.Coroutine;
 import com.softlocked.orbit.interpreter.function.coroutine.CoroutineFunction;
@@ -1943,6 +1944,44 @@ public class Parser {
             }
 
             else if (token.equals("[")) {
+                if (i - 1 >= 0) {
+                    String last = postfix.get(i - 1);
+
+                    if (last.matches(Utils.IDENTIFIER_REGEX)) {
+                        ASTNode array = stack.pop();
+
+                        List<List<String>> indexes = new ArrayList<>();
+
+                        int pair = getPair(postfix, i, "[", "]");
+
+                        indexes.add(postfix.subList(i + 1, pair));
+
+                        int start = pair + 1;
+                        while (pair < postfix.size() - 1 && postfix.get(start).equals("[")) {
+                            pair = getPair(postfix, start, "[", "]");
+
+                            if(pair == -1) break;
+
+                            List<String> subList = postfix.subList(start + 1, pair);
+                            indexes.add(subList);
+
+                            start = pair + 1;
+                        }
+
+                        List<ASTNode> indexNodes = new ArrayList<>();
+
+                        for (List<String> index : indexes) {
+                            indexNodes.add(postfixToAST(index, context));
+                        }
+
+                        stack.push(new CollectionAccessASTNode(array, indexNodes));
+
+                        i = pair;
+
+                        continue;
+                    }
+                }
+
                 ArrayList<ASTNode> list = new ArrayList<>();
 
                 int pair = getPair(postfix, i, "[", "]");
