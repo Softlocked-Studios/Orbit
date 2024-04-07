@@ -1730,8 +1730,16 @@ public class Parser {
 
                 List<String> subExpression = new ArrayList<>(infix.subList(i + 1, end));
 
-                // For the time being just add everything as it is
-                postfixExpression.addAll(subExpression);
+                int next = getNextSeparator(subExpression, 0);
+                while (next != -1) {
+                    postfixExpression.addAll(infixToPostfix(subExpression.subList(0, next)));
+                    postfixExpression.add(",");
+
+                    subExpression = subExpression.subList(next + 1, subExpression.size());
+                    next = getNextSeparator(subExpression, 0);
+                }
+
+                postfixExpression.addAll(infixToPostfix(subExpression));
 
                 postfixExpression.add("]");
 
