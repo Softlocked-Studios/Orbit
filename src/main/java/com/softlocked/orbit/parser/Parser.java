@@ -15,6 +15,7 @@ import com.softlocked.orbit.interpreter.ast.value.ValueASTNode;
 import com.softlocked.orbit.interpreter.ast.value.VariableASTNode;
 import com.softlocked.orbit.interpreter.ast.variable.DeleteVarASTNode;
 import com.softlocked.orbit.interpreter.ast.variable.collection.CollectionAccessASTNode;
+import com.softlocked.orbit.interpreter.ast.variable.collection.CollectionSetASTNode;
 import com.softlocked.orbit.interpreter.function.ClassConstructor;
 import com.softlocked.orbit.interpreter.function.coroutine.Coroutine;
 import com.softlocked.orbit.interpreter.function.coroutine.CoroutineFunction;
@@ -954,7 +955,148 @@ public class Parser {
                 String next = getNext(tokens, i + 1);
                 int nextIndex = findNext(tokens, i + 1, next);
 
-                if(next != null && OperationType.fromSymbol(next) == null) {
+                // Collection assignment
+                if (next != null && next.equals("[")) {
+                    List<List<String>> indices = new ArrayList<>();
+
+                    int pair = getPair(tokens, nextIndex, "[", "]");
+
+                    if(pair == -1) {
+                        throw new ParsingException("Unexpected end of file");
+                    }
+
+                    indices.add(tokens.subList(nextIndex + 1, pair));
+
+                    int start = pair + 1;
+                    next = getNext(tokens, start);
+                    nextIndex = findNext(tokens, start, next);
+
+                    while(next != null && next.equals("[")) {
+                        pair = getPair(tokens, start, "[", "]");
+
+                        if(pair == -1) {
+                            throw new ParsingException("Unexpected end of file");
+                        }
+
+                        indices.add(tokens.subList(start + 1, pair));
+
+                        start = pair + 1;
+                        next = getNext(tokens, start);
+                        nextIndex = findNext(tokens, start, next);
+                    }
+
+                    if(next == null) {
+                        throw new ParsingException("Invalid collection assignment");
+                    }
+
+                    VariableASTNode array = new VariableASTNode(token);
+                    List<ASTNode> indexNodes = new ArrayList<>();
+
+                    for(List<String> index : indices) {
+                        List<String> postfix = infixToPostfix(index);
+
+                        indexNodes.add(postfixToAST(postfix, context));
+                    }
+
+                    Pair<List<String>, Integer> expression = fetchExpression(tokens, nextIndex + 1);
+
+                    List<String> postfix = infixToPostfix(expression.first);
+
+                    ASTNode value = postfixToAST(postfix, context);
+
+                    switch (next) {
+                        case "=" -> {
+                            body.addNode(new CollectionSetASTNode(
+                                    array,
+                                    indexNodes,
+                                    value
+                            ));
+
+                            i = expression.second;
+
+                            continue;
+                        }
+                        case "+=" -> {
+                            body.addNode(new CollectionSetASTNode(
+                                    array,
+                                    indexNodes,
+                                    new OperationASTNode(
+                                            new CollectionAccessASTNode(array, indexNodes),
+                                            value,
+                                            OperationType.ADD
+                                    )
+                            ));
+
+                            i = expression.second;
+
+                            continue;
+                        }
+                        case "-=" -> {
+                            body.addNode(new CollectionSetASTNode(
+                                    array,
+                                    indexNodes,
+                                    new OperationASTNode(
+                                            new CollectionAccessASTNode(array, indexNodes),
+                                            value,
+                                            OperationType.SUBTRACT
+                                    )
+                            ));
+
+                            i = expression.second;
+
+                            continue;
+                        }
+                        case "*=" -> {
+                            body.addNode(new CollectionSetASTNode(
+                                    array,
+                                    indexNodes,
+                                    new OperationASTNode(
+                                            new CollectionAccessASTNode(array, indexNodes),
+                                            value,
+                                            OperationType.MULTIPLY
+                                    )
+                            ));
+
+                            i = expression.second;
+
+                            continue;
+                        }
+                        case "/=" -> {
+                            body.addNode(new CollectionSetASTNode(
+                                    array,
+                                    indexNodes,
+                                    new OperationASTNode(
+                                            new CollectionAccessASTNode(array, indexNodes),
+                                            value,
+                                            OperationType.DIVIDE
+                                    )
+                            ));
+
+                            i = expression.second;
+
+                            continue;
+                        }
+                        case "%=" -> {
+                            body.addNode(new CollectionSetASTNode(
+                                    array,
+                                    indexNodes,
+                                    new OperationASTNode(
+                                            new CollectionAccessASTNode(array, indexNodes),
+                                            value,
+                                            OperationType.MODULO
+                                    )
+                            ));
+
+                            i = expression.second;
+
+                            continue;
+                        }
+                        default -> {
+                            throw new ParsingException("Invalid collection assignment");
+                        }
+                    }
+                }
+                else if(next != null && OperationType.fromSymbol(next) == null) {
                     ASTNode value;
                     Pair<List<String>, Integer> expression = null;
 
