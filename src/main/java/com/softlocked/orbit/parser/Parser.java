@@ -524,6 +524,8 @@ public class Parser {
                                             for(int i = 0; i < arguments.size(); i++) {
                                                 Object value = new VariableASTNode(arguments.get(i).first.substring(1)).evaluate(context);
 
+                                                value = Utils.cast(value, String.class);
+
                                                 sb.append(value);
 
                                                 if(i != arguments.size() - 1) {
