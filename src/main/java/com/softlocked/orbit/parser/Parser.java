@@ -17,8 +17,10 @@ import com.softlocked.orbit.interpreter.ast.variable.DeleteVarASTNode;
 import com.softlocked.orbit.interpreter.ast.variable.collection.CollectionAccessASTNode;
 import com.softlocked.orbit.interpreter.ast.variable.collection.CollectionSetASTNode;
 import com.softlocked.orbit.interpreter.function.ClassConstructor;
+import com.softlocked.orbit.interpreter.function.NativeFunction;
 import com.softlocked.orbit.interpreter.function.coroutine.Coroutine;
 import com.softlocked.orbit.interpreter.function.coroutine.CoroutineFunction;
+import com.softlocked.orbit.memory.ILocalContext;
 import com.softlocked.orbit.opm.ast.pkg.ImportFileASTNode;
 import com.softlocked.orbit.opm.ast.pkg.ImportModuleASTNode;
 import com.softlocked.orbit.utils.Pair;
@@ -357,7 +359,7 @@ public class Parser {
                 }
             }
 
-            else if (token.equals("class")) {
+            else if (token.equals("class") || token.equals("record")) {
                 String className = getNext(tokens, i + 1);
                 int classNameIndex = findNext(tokens, i + 1, className);
 
@@ -380,6 +382,10 @@ public class Parser {
                 List<String> superClasses = new ArrayList<>();
                 ASTNode bodyNode = null;
 
+                HashMap<String, Pair<Variable.Type, ASTNode>> fields = new HashMap<>();
+                HashMap<Pair<String, Integer>, IFunction> functions = new HashMap<>();
+                HashMap<Integer, ClassConstructor> constructors = new HashMap<>();
+
                 try {
                     if (next.equals(":") || next.equals("extends")) {
                         int bodyStart = findNext(tokens, nextIndex + 1, "{");
@@ -400,7 +406,145 @@ public class Parser {
                         bodyNode = parse(tokens.subList(bodyStart + 1, bodyEnd), context, className);
 
                         i = bodyEnd;
+                    } else if (next.equals("(")) {
+                        if(!token.equals("record")) {
+                            throw new ParsingException("Invalid class declaration");
+                        }
+                        int pair = getPair(tokens, nextIndex, "(", ")");
+
+                        if(pair == -1) {
+                            throw new ParsingException("Unexpected end of file");
+                        }
+
+                        List<String> params = tokens.subList(nextIndex + 1, pair);
+
+                        List<Pair<String, Variable.Type>> arguments = new ArrayList<>();
+
+                        int nextComma = getNextSeparator(params, 0);
+
+                        while(nextComma != -1) {
+                            List<String> subList = params.subList(0, nextComma);
+                            if(subList.size() == 1) {
+                                arguments.add(new Pair<>(subList.get(0), Variable.Type.ANY));
+                            } else if(subList.size() == 2) {
+                                Class<?> primitiveType = GlobalContext.getPrimitiveType(subList.get(0));
+                                Variable.Type type = primitiveType != null ? Variable.Type.fromJavaClass(primitiveType) : Variable.Type.CLASS;
+                                if(type == null) type = Variable.Type.CLASS;
+                                arguments.add(new Pair<>(subList.get(1), type));
+                            } else {
+                                throw new ParsingException("Invalid function declaration");
+                            }
+
+                            params = params.subList(nextComma + 1, params.size());
+                            nextComma = getNextSeparator(params, 0);
+                        }
+
+                        if(!params.isEmpty()) {
+                            if(params.size() == 1) {
+                                arguments.add(new Pair<>(params.get(0), Variable.Type.ANY));
+                            } else if(params.size() == 2) {
+                                Class<?> primitiveType = GlobalContext.getPrimitiveType(params.get(0));
+                                Variable.Type type = primitiveType != null ? Variable.Type.fromJavaClass(primitiveType) : Variable.Type.CLASS;
+                                if(type == null) type = Variable.Type.CLASS;
+                                arguments.add(new Pair<>(params.get(1), type));
+                            } else {
+                                throw new ParsingException("Invalid function declaration");
+                            }
+                        }
+
+                        String nextC = getNext(tokens, pair + 1);
+
+                        if(nextC == null) {
+                            throw new ParsingException("Unexpected end of file");
+                        }
+
+                        int bodyEnd = 0;
+                        if(nextC.equals("{")) {
+                            bodyEnd = getPair(tokens, pair + 1, "{", "}");
+
+                            if (bodyEnd == -1) {
+                                throw new ParsingException("Unexpected end of file");
+                            }
+
+                            bodyNode = parse(tokens.subList(pair + 1, bodyEnd), context, className);
+
+                            i = bodyEnd;
+                        } else if(nextC.equals(":") || nextC.equals("extends")) {
+                            int bodyStart = findNext(tokens, nextIndex + 1, "{");
+
+                            if (bodyStart == -1) {
+                                throw new ParsingException("Unexpected end of file");
+                            }
+
+                            superClasses = new ArrayList<>(tokens.subList(nextIndex + 1, bodyStart));
+                            superClasses.removeIf(s -> s.equals(","));
+
+                            bodyEnd = getPair(tokens, bodyStart, "{", "}");
+
+                            if (bodyEnd == -1) {
+                                throw new ParsingException("Unexpected end of file");
+                            }
+
+                            bodyNode = parse(tokens.subList(bodyStart + 1, bodyEnd), context, className);
+
+                            i = bodyEnd;
+                        }
+
+                        BodyASTNode constructorBody = new BodyASTNode();
+
+                        for(Pair<String, Variable.Type> argument : arguments) {
+                            constructorBody.addNode(
+                                    new AssignVarASTNode(
+                                            argument.first,
+                                            new VariableASTNode("_" + argument.first)
+                                    )
+                            );
+                            fields.put(argument.first, new Pair<>(argument.second, new ValueASTNode(Utils.newObject(argument.second.getJavaClass()))));
+                            argument.first = "_" + argument.first;
+                        }
+
+                        // Now create a constructor from the arguments
+                        constructors.put(arguments.size(), new ClassConstructor(
+                                arguments.size(),
+                                arguments,
+                                constructorBody
+                        ));
+
+                        functions.put(
+                                new Pair<>("cast", 1),
+                                new NativeFunction("cast", List.of(Variable.Type.STRING), Variable.Type.ANY) {
+                                    @Override
+                                    public Object call(ILocalContext context, List<Object> args) {
+                                        String type = (String) args.get(0);
+
+                                        if(type.equals("string")) {
+                                            StringBuilder sb = new StringBuilder();
+                                            sb.append(className).append("(");
+
+                                            for(int i = 0; i < arguments.size(); i++) {
+                                                Object value = new VariableASTNode(arguments.get(i).first.substring(1)).evaluate(context);
+
+                                                sb.append(value);
+
+                                                if(i != arguments.size() - 1) {
+                                                    sb.append(", ");
+                                                }
+                                            }
+
+                                            sb.append(")");
+
+                                            return sb.toString();
+                                        }
+
+                                        return null;
+                                    }
+                                }
+                        );
                     } else if (next.equals("{")) {
+                        if(token.equals("record")) {
+                            throw new ParsingException("Invalid record declaration");
+                        }
+
                         int bodyEnd = getPair(tokens, nextIndex, "{", "}");
 
                         if (bodyEnd == -1) {
@@ -414,12 +558,6 @@ public class Parser {
                         throw new ParsingException("Invalid class declaration");
                     }
 
-                    // Now go through the body. If there's function or variable declarations, add them to the class
-                    // If it's anything else, throw an error
-                    HashMap<String, Pair<Variable.Type, ASTNode>> fields = new HashMap<>();
-                    HashMap<Pair<String, Integer>, IFunction> functions = new HashMap<>();
-                    HashMap<Integer, ClassConstructor> constructors = new HashMap<>();
-
                     if (bodyNode instanceof BodyASTNode bd) {
                         for (ASTNode node : bd.statements()) {
                             if (node instanceof DecVarASTNode decVarASTNode) {
@@ -429,7 +567,7 @@ public class Parser {
                             } else if (node instanceof OrbitFunction function) {
                                 functions.put(new Pair<>(function.getName(), function.getParameterCount()), function);
                             } else {
-                                throw new ParsingException("Invalid class body");
+                                throw new ParsingException(token.equals("class") ? "Invalid class body" : "Invalid record body");
                             }
                         }
                     } else if (bodyNode instanceof DecVarASTNode decVarASTNode) {
@@ -439,7 +577,7 @@ public class Parser {
                     } else if (bodyNode instanceof OrbitFunction function) {
                         functions.put(new Pair<>(function.getName(), function.getParameterCount()), function);
                     } else {
-                        throw new ParsingException("Invalid class body");
+                        throw new ParsingException(token.equals("class") ? "Invalid class body" : "Invalid record body");
                     }
 
                     ClassDefinitionASTNode classDef = new ClassDefinitionASTNode(
@@ -538,31 +676,11 @@ public class Parser {
 
                             Variable.Type type = Variable.Type.fromJavaClass(GlobalContext.getPrimitiveType(token));
 
-                            if (type == Variable.Type.LIST) {
-                                body.addNode(new DecVarASTNode(
-                                        identifier,
-                                        new FunctionCallASTNode(
-                                                "list.new",
-                                                List.of()
-                                        ),
-                                        type
-                                ));
-                            } else if (type == Variable.Type.MAP) {
-                                body.addNode(new DecVarASTNode(
-                                        identifier,
-                                        new FunctionCallASTNode(
-                                                "map.new",
-                                                List.of()
-                                        ),
-                                        type
-                                ));
-                            } else {
-                                body.addNode(new DecVarASTNode(
-                                        identifier,
-                                        new ValueASTNode(Utils.newObject(GlobalContext.getPrimitiveType(token))),
-                                        type
-                                ));
-                            }
+                            body.addNode(new DecVarASTNode(
+                                    identifier,
+                                    new ValueASTNode(Utils.newObject(GlobalContext.getPrimitiveType(token))),
+                                    type
+                            ));
 
                             i = next == null ? tokens.size() : nextIndex;
 
@@ -712,10 +830,8 @@ public class Parser {
                 String next = getNext(tokens, i + 1);
                 int nextIndex = findNext(tokens, i + 1, next);
 
-                String last = getLast(tokens, i - 1);
-
-                if(token.equals(clazzName) && next != null && (last == null || last.equals("{") || last.equals("}")) && next.equals("(")) {
-                    // Constructor call
+                if(token.equals(clazzName) && next != null && next.equals("(")) {
+                    // Constructor declaration
                     int end = findNext(tokens, nextIndex, ")");
 
                     List<String> params = tokens.subList(nextIndex + 1, end);
