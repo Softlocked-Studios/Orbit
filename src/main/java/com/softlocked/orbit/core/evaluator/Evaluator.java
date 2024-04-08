@@ -289,7 +289,7 @@ public class Evaluator {
         else if(b == null) {
             return false;
         }
-        if(!(a instanceof OrbitObject)) {
+        if(!(a instanceof OrbitObject obj)) {
             // strings
             if(a instanceof String || b instanceof String) {
                 return a.toString().equals(b.toString());
@@ -331,7 +331,11 @@ public class Evaluator {
                 }
             }
         } else {
-            return ((OrbitObject) a).callFunction("==", List.of(b));
+            if(obj.hasFunction("==", 1)) {
+                return obj.callFunction("==", List.of(b));
+            }
+
+            return obj == b;
         }
     }
 
@@ -342,7 +346,7 @@ public class Evaluator {
         else if(b == null) {
             return true;
         }
-        if(!(a instanceof OrbitObject)) {
+        if(!(a instanceof OrbitObject obj)) {
             // strings
             if(a instanceof String || b instanceof String) {
                 return !a.toString().equals(b.toString());
@@ -384,8 +388,16 @@ public class Evaluator {
                 }
             }
         } else {
-            return ((OrbitObject) a).callFunction("!=", List.of(b));
+            if(obj.hasFunction("!=", 1)) {
+                return obj.callFunction("!=", List.of(b));
+            }
+
+            return obj != b;
         }
+    }
+
+    public static Object equalsType(Object a, Object b) {
+        return (boolean)equal(a,b) && a.getClass().equals(b.getClass());
     }
 
     public static Object greaterThan(Object a, Object b) {

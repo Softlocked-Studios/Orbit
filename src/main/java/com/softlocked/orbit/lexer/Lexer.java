@@ -75,7 +75,7 @@ public class Lexer {
                 }
 
                 switch (token) {
-                    // 2.1) ++, --, +=, -=, *=, /=, ==, !=, <=, >=
+                    // 2.1) ++, --, +=, -=, *=, /=, ==, !=, <=, >=, ===
                     case "+" -> {
                         if (i + 1 < tokens.size()) {
                             String nextToken = tokens.get(i + 1);
@@ -96,6 +96,12 @@ public class Lexer {
                             if (nextToken.equals("=")) {
                                 tokens.set(i, token + "=");
                                 tokens.remove(i + 1);
+
+                                // if the current one is == and next one is =, then combine them
+                                if (tokens.get(i).equals("==") && tokens.get(i + 1).equals("=")) {
+                                    tokens.set(i, "===");
+                                    tokens.remove(i + 1);
+                                }
                             }
 
                             if (token.equals("*") || token.equals(">") || token.equals("<")) {

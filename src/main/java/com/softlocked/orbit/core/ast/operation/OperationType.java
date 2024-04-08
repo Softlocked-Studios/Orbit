@@ -24,6 +24,7 @@ public enum OperationType {
     BITWISE_RIGHT_SHIFT(">>"),
 
     POWER("**"),
+    EQUALS_TYPE("==="),
     REF(":"),
 
     // Unused operators. They are here for operator overloading only

@@ -88,6 +88,9 @@ public record OperationASTNode(ASTNode left, ASTNode right, OperationType type) 
                 case BITWISE_RIGHT_SHIFT -> {
                     return Evaluator.bitwiseRightShift(left, right);
                 }
+                case EQUALS_TYPE -> {
+                    return Evaluator.equalsType(left, right);
+                }
                 default -> {
                     return Evaluator.customOverload(left, right, this.type().getSymbol());
                 }
