@@ -387,89 +387,8 @@ public class Parser {
                 HashMap<Integer, ClassConstructor> constructors = new HashMap<>();
 
                 try {
-                    if (next.equals(":") || next.equals("extends")) {
-                        int bodyStart = findNext(tokens, nextIndex + 1, "{");
-
-                        if (bodyStart == -1) {
-                            throw new ParsingException("Unexpected end of file");
-                        }
-
-                        superClasses = new ArrayList<>(tokens.subList(nextIndex + 1, bodyStart));
-                        superClasses.removeIf(s -> s.equals(","));
-
-                        int bodyEnd = getPair(tokens, bodyStart, "{", "}");
-
-                        if (bodyEnd == -1) {
-                            throw new ParsingException("Unexpected end of file");
-                        }
-
-                        bodyNode = parse(tokens.subList(bodyStart + 1, bodyEnd), context, className);
-
-                        i = bodyEnd;
-                    } else if (next.equals("(")) {
-                        if(!token.equals("record")) {
-                            throw new ParsingException("Invalid class declaration");
-                        }
-                        int pair = getPair(tokens, nextIndex, "(", ")");
-
-                        if(pair == -1) {
-                            throw new ParsingException("Unexpected end of file");
-                        }
-
-                        List<String> params = tokens.subList(nextIndex + 1, pair);
-
-                        List<Pair<String, Variable.Type>> arguments = new ArrayList<>();
-
-                        int nextComma = getNextSeparator(params, 0);
-
-                        while(nextComma != -1) {
-                            List<String> subList = params.subList(0, nextComma);
-                            if(subList.size() == 1) {
-                                arguments.add(new Pair<>(subList.get(0), Variable.Type.ANY));
-                            } else if(subList.size() == 2) {
-                                Class<?> primitiveType = GlobalContext.getPrimitiveType(subList.get(0));
-                                Variable.Type type = primitiveType != null ? Variable.Type.fromJavaClass(primitiveType) : Variable.Type.CLASS;
-                                if(type == null) type = Variable.Type.CLASS;
-                                arguments.add(new Pair<>(subList.get(1), type));
-                            } else {
-                                throw new ParsingException("Invalid function declaration");
-                            }
-
-                            params = params.subList(nextComma + 1, params.size());
-                            nextComma = getNextSeparator(params, 0);
-                        }
-
-                        if(!params.isEmpty()) {
-                            if(params.size() == 1) {
-                                arguments.add(new Pair<>(params.get(0), Variable.Type.ANY));
-                            } else if(params.size() == 2) {
-                                Class<?> primitiveType = GlobalContext.getPrimitiveType(params.get(0));
-                                Variable.Type type = primitiveType != null ? Variable.Type.fromJavaClass(primitiveType) : Variable.Type.CLASS;
-                                if(type == null) type = Variable.Type.CLASS;
-                                arguments.add(new Pair<>(params.get(1), type));
-                            } else {
-                                throw new ParsingException("Invalid function declaration");
-                            }
-                        }
-
-                        String nextC = getNext(tokens, pair + 1);
-
-                        if(nextC == null) {
-                            throw new ParsingException("Unexpected end of file");
-                        }
-
-                        int bodyEnd = 0;
-                        if(nextC.equals("{")) {
-                            bodyEnd = getPair(tokens, pair + 1, "{", "}");
-
-                            if (bodyEnd == -1) {
-                                throw new ParsingException("Unexpected end of file");
-                            }
-
-                            bodyNode = parse(tokens.subList(pair + 1, bodyEnd), context, className);
-
-                            i = bodyEnd;
-                        } else if(nextC.equals(":") || nextC.equals("extends")) {
+                    switch (next) {
+                        case ":", "extends" -> {
                             int bodyStart = findNext(tokens, nextIndex + 1, "{");
 
                             if (bodyStart == -1) {
@@ -479,7 +398,7 @@ public class Parser {
                             superClasses = new ArrayList<>(tokens.subList(nextIndex + 1, bodyStart));
                             superClasses.removeIf(s -> s.equals(","));
 
-                            bodyEnd = getPair(tokens, bodyStart, "{", "}");
+                            int bodyEnd = getPair(tokens, bodyStart, "{", "}");
 
                             if (bodyEnd == -1) {
                                 throw new ParsingException("Unexpected end of file");
@@ -489,75 +408,159 @@ public class Parser {
 
                             i = bodyEnd;
                         }
+                        case "(" -> {
+                            if (!token.equals("record")) {
+                                throw new ParsingException("Invalid class declaration");
+                            }
+                            int pair = getPair(tokens, nextIndex, "(", ")");
 
-                        BodyASTNode constructorBody = new BodyASTNode();
+                            if (pair == -1) {
+                                throw new ParsingException("Unexpected end of file");
+                            }
 
-                        for(Pair<String, Variable.Type> argument : arguments) {
-                            constructorBody.addNode(
-                                    new AssignVarASTNode(
-                                            argument.first,
-                                            new VariableASTNode("_" + argument.first)
-                                    )
-                            );
-                            fields.put(argument.first, new Pair<>(argument.second, new ValueASTNode(Utils.newObject(argument.second.getJavaClass()))));
-                            argument.first = "_" + argument.first;
-                        }
+                            List<String> params = tokens.subList(nextIndex + 1, pair);
 
-                        // Now create a constructor from the arguments
-                        constructors.put(arguments.size(), new ClassConstructor(
-                                arguments.size(),
-                                arguments,
-                                constructorBody
-                        ));
+                            List<Pair<String, Variable.Type>> arguments = new ArrayList<>();
 
-                        functions.put(
-                                new Pair<>("cast", 1),
-                                new NativeFunction("cast", List.of(Variable.Type.STRING), Variable.Type.ANY) {
-                                    @Override
-                                    public Object call(ILocalContext context, List<Object> args) {
-                                        String type = (String) args.get(0);
+                            int nextComma = getNextSeparator(params, 0);
 
-                                        if(type.equals("string")) {
-                                            StringBuilder sb = new StringBuilder();
-                                            sb.append(className).append("(");
+                            while (nextComma != -1) {
+                                List<String> subList = params.subList(0, nextComma);
+                                if (subList.size() == 1) {
+                                    arguments.add(new Pair<>(subList.get(0), Variable.Type.ANY));
+                                } else if (subList.size() == 2) {
+                                    Class<?> primitiveType = GlobalContext.getPrimitiveType(subList.get(0));
+                                    Variable.Type type = primitiveType != null ? Variable.Type.fromJavaClass(primitiveType) : Variable.Type.CLASS;
+                                    if (type == null) type = Variable.Type.CLASS;
+                                    arguments.add(new Pair<>(subList.get(1), type));
+                                } else {
+                                    throw new ParsingException("Invalid function declaration");
+                                }
 
-                                            for(int i = 0; i < arguments.size(); i++) {
-                                                Object value = new VariableASTNode(arguments.get(i).first.substring(1)).evaluate(context);
+                                params = params.subList(nextComma + 1, params.size());
+                                nextComma = getNextSeparator(params, 0);
+                            }
 
-                                                value = Utils.cast(value, String.class);
+                            if (!params.isEmpty()) {
+                                if (params.size() == 1) {
+                                    arguments.add(new Pair<>(params.get(0), Variable.Type.ANY));
+                                } else if (params.size() == 2) {
+                                    Class<?> primitiveType = GlobalContext.getPrimitiveType(params.get(0));
+                                    Variable.Type type = primitiveType != null ? Variable.Type.fromJavaClass(primitiveType) : Variable.Type.CLASS;
+                                    if (type == null) type = Variable.Type.CLASS;
+                                    arguments.add(new Pair<>(params.get(1), type));
+                                } else {
+                                    throw new ParsingException("Invalid function declaration");
+                                }
+                            }
 
-                                                sb.append(value);
+                            String nextC = getNext(tokens, pair + 1);
 
-                                                if(i != arguments.size() - 1) {
-                                                    sb.append(", ");
+                            if (nextC == null) {
+                                throw new ParsingException("Unexpected end of file");
+                            }
+
+                            int bodyEnd = 0;
+                            if (nextC.equals("{")) {
+                                bodyEnd = getPair(tokens, pair + 1, "{", "}");
+
+                                if (bodyEnd == -1) {
+                                    throw new ParsingException("Unexpected end of file");
+                                }
+
+                                bodyNode = parse(tokens.subList(pair + 1, bodyEnd), context, className);
+
+                                i = bodyEnd;
+                            } else if (nextC.equals(":") || nextC.equals("extends")) {
+                                int bodyStart = findNext(tokens, nextIndex + 1, "{");
+
+                                if (bodyStart == -1) {
+                                    throw new ParsingException("Unexpected end of file");
+                                }
+
+                                superClasses = new ArrayList<>(tokens.subList(nextIndex + 1, bodyStart));
+                                superClasses.removeIf(s -> s.equals(","));
+
+                                bodyEnd = getPair(tokens, bodyStart, "{", "}");
+
+                                if (bodyEnd == -1) {
+                                    throw new ParsingException("Unexpected end of file");
+                                }
+
+                                bodyNode = parse(tokens.subList(bodyStart + 1, bodyEnd), context, className);
+
+                                i = bodyEnd;
+                            }
+
+                            BodyASTNode constructorBody = new BodyASTNode();
+
+                            for (Pair<String, Variable.Type> argument : arguments) {
+                                constructorBody.addNode(
+                                        new AssignVarASTNode(
+                                                argument.first,
+                                                new VariableASTNode("_" + argument.first)
+                                        )
+                                );
+                                fields.put(argument.first, new Pair<>(argument.second, new ValueASTNode(Utils.newObject(argument.second.getJavaClass()))));
+                                argument.first = "_" + argument.first;
+                            }
+
+                            // Now create a constructor from the arguments
+                            constructors.put(arguments.size(), new ClassConstructor(
+                                    arguments.size(),
+                                    arguments,
+                                    constructorBody
+                            ));
+
+                            functions.put(
+                                    new Pair<>("cast", 1),
+                                    new NativeFunction("cast", List.of(Variable.Type.STRING), Variable.Type.ANY) {
+                                        @Override
+                                        public Object call(ILocalContext context, List<Object> args) {
+                                            String type = (String) args.get(0);
+
+                                            if (type.equals("string")) {
+                                                StringBuilder sb = new StringBuilder();
+                                                sb.append(className).append("(");
+
+                                                for (int i = 0; i < arguments.size(); i++) {
+                                                    Object value = new VariableASTNode(arguments.get(i).first.substring(1)).evaluate(context);
+
+                                                    value = Utils.cast(value, String.class);
+
+                                                    sb.append(value);
+
+                                                    if (i != arguments.size() - 1) {
+                                                        sb.append(", ");
+                                                    }
                                                 }
+
+                                                sb.append(")");
+
+                                                return sb.toString();
                                             }
 
-                                            sb.append(")");
-
-                                            return sb.toString();
+                                            return null;
                                         }
-
-                                        return null;
                                     }
-                                }
-                        );
-                    } else if (next.equals("{")) {
-                        if(token.equals("record")) {
-                            throw new ParsingException("Invalid record declaration");
+                            );
                         }
+                        case "{" -> {
+                            if (token.equals("record")) {
+                                throw new ParsingException("Invalid record declaration");
+                            }
 
-                        int bodyEnd = getPair(tokens, nextIndex, "{", "}");
+                            int bodyEnd = getPair(tokens, nextIndex, "{", "}");
 
-                        if (bodyEnd == -1) {
-                            throw new ParsingException("Unexpected end of file");
+                            if (bodyEnd == -1) {
+                                throw new ParsingException("Unexpected end of file");
+                            }
+
+                            bodyNode = parse(tokens.subList(nextIndex + 1, bodyEnd), context, className);
+
+                            i = bodyEnd;
                         }
-
-                        bodyNode = parse(tokens.subList(nextIndex + 1, bodyEnd), context, className);
-
-                        i = bodyEnd;
-                    } else {
-                        throw new ParsingException("Invalid class declaration");
+                        default -> throw new ParsingException("Invalid class declaration");
                     }
 
                     if (bodyNode instanceof BodyASTNode bd) {
@@ -833,6 +836,8 @@ public class Parser {
                 int nextIndex = findNext(tokens, i + 1, next);
 
                 if(token.equals(clazzName) && next != null && next.equals("(")) {
+                    System.out.println("Found constructor");
+
                     // Constructor declaration
                     int end = findNext(tokens, nextIndex, ")");
 

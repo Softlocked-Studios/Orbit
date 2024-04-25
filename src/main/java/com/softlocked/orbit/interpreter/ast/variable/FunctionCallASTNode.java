@@ -1,11 +1,14 @@
 package com.softlocked.orbit.interpreter.ast.variable;
 
 import com.softlocked.orbit.core.ast.ASTNode;
+import com.softlocked.orbit.core.datatypes.Variable;
 import com.softlocked.orbit.core.datatypes.functions.IFunction;
 import com.softlocked.orbit.core.evaluator.Breakpoint;
+import com.softlocked.orbit.interpreter.function.Consumer;
 import com.softlocked.orbit.interpreter.function.NativeFunction;
 import com.softlocked.orbit.memory.ILocalContext;
 import com.softlocked.orbit.memory.LocalContext;
+import com.softlocked.orbit.utils.Pair;
 import com.softlocked.orbit.utils.Utils;
 
 import java.util.ArrayList;
@@ -23,8 +26,22 @@ public record FunctionCallASTNode(String name, List<ASTNode> args) implements AS
 
             List<Object> evaluatedArgs = new ArrayList<>();
 
-            for (ASTNode arg : args) {
-                evaluatedArgs.add(arg.evaluate(context));
+            if (function.getParameterCount() != -1) {
+                List<Pair<String, Variable.Type>> parameters = function.getParameters();
+
+                for (ASTNode arg : args) {
+                    Variable.Type type = parameters.get(evaluatedArgs.size()).second;
+
+                    if(type == Variable.Type.CONSUMER) {
+                        evaluatedArgs.add(new Consumer(arg));
+                    } else {
+                        evaluatedArgs.add(arg.evaluate(context));
+                    }
+                }
+            } else {
+                for (ASTNode arg : args) {
+                    evaluatedArgs.add(arg.evaluate(context));
+                }
             }
 
             LocalContext localContext = new LocalContext(context.getRoot());

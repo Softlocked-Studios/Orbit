@@ -1,6 +1,7 @@
 package com.softlocked.orbit.libraries;
 
 import com.softlocked.orbit.core.datatypes.Variable;
+import com.softlocked.orbit.interpreter.function.Consumer;
 import com.softlocked.orbit.interpreter.function.NativeFunction;
 import com.softlocked.orbit.interpreter.memory.GlobalContext;
 import com.softlocked.orbit.java.OrbitJavaLibrary;
@@ -215,6 +216,23 @@ public class Types_Library implements OrbitJavaLibrary {
                 }
 
                 return Integer.toHexString(System.identityHashCode(value));
+            }
+        });
+
+        context.addFunction(new NativeFunction("consumer.accept", -1, Variable.Type.ANY) {
+            @Override
+            public Object call(ILocalContext context, List<Object> args) {
+                if(!(args.get(0) instanceof Consumer consumer))
+                    throw new RuntimeException("Invalid consumer");
+
+                return consumer.accept(context, args.subList(1, args.size()));
+            }
+        });
+
+        context.addFunction(new NativeFunction("consumer", List.of(Variable.Type.CONSUMER), Variable.Type.CONSUMER) {
+            @Override
+            public Object call(ILocalContext context, List<Object> args) {
+                return args.get(0);
             }
         });
     }

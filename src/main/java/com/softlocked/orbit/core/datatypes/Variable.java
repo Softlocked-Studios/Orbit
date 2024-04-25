@@ -1,6 +1,7 @@
 package com.softlocked.orbit.core.datatypes;
 
 import com.softlocked.orbit.core.datatypes.classes.OrbitObject;
+import com.softlocked.orbit.interpreter.function.Consumer;
 import com.softlocked.orbit.interpreter.function.coroutine.Coroutine;
 
 import java.util.List;
@@ -56,7 +57,8 @@ public class Variable {
         LIST,
         MAP,
         REFERENCE,
-        COROUTINE;
+        COROUTINE,
+        CONSUMER;
 
         public Class<?> getJavaClass() {
             return switch (this) {
@@ -77,6 +79,7 @@ public class Variable {
                 case MAP -> java.util.Map.class;
                 case REFERENCE -> Variable.class;
                 case COROUTINE -> Coroutine.class;
+                case CONSUMER -> Consumer.class;
             };
         }
 
@@ -99,6 +102,7 @@ public class Variable {
             else if (clazz == Variable.class) return REFERENCE;
             // arrays
             else if (clazz.isArray()) return ARRAY;
+            else if (clazz == Consumer.class) return CONSUMER;
             else return null;
         }
 
@@ -118,6 +122,7 @@ public class Variable {
             else if (value instanceof Map) return "map";
             else if (value instanceof Coroutine) return "coroutine";
             else if (value instanceof Variable) return "ref";
+            else if (value instanceof Consumer) return "consumer";
             else if (value instanceof OrbitObject orbitObject) {
                 return orbitObject.getClazz().name();
             }
@@ -137,6 +142,7 @@ public class Variable {
             case BOOL -> { return "bool"; }
             case STRING -> { return "string"; }
             case ARRAY -> { return "array"; }
+            case CONSUMER -> { return "consumer"; }
             case CLASS, ANY -> {
                 if (value instanceof OrbitObject) {
                     return ((OrbitObject) value).getClazz().name();

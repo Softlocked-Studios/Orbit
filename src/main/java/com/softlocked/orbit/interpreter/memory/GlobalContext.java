@@ -9,6 +9,7 @@ import com.softlocked.orbit.core.exception.ParsingException;
 import com.softlocked.orbit.interpreter.ast.value.VariableASTNode;
 import com.softlocked.orbit.interpreter.ast.variable.AssignVarASTNode;
 import com.softlocked.orbit.interpreter.function.ClassConstructor;
+import com.softlocked.orbit.interpreter.function.Consumer;
 import com.softlocked.orbit.interpreter.function.NativeFunction;
 import com.softlocked.orbit.interpreter.function.coroutine.Coroutine;
 import com.softlocked.orbit.java.OrbitJavaLibrary;
@@ -74,6 +75,7 @@ public class GlobalContext extends LocalContext {
         primitives.put("reference", Variable.class);
 
         primitives.put("coroutine", Coroutine.class);
+        primitives.put("consumer", Consumer.class);
 
         builtInLibraries.add(new Standard_Library());
         builtInLibraries.add(new Container_Library());
