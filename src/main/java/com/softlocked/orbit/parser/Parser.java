@@ -836,8 +836,6 @@ public class Parser {
                 int nextIndex = findNext(tokens, i + 1, next);
 
                 if(token.equals(clazzName) && next != null && next.equals("(")) {
-                    System.out.println("Found constructor");
-
                     // Constructor declaration
                     int end = findNext(tokens, nextIndex, ")");
 
@@ -1108,114 +1106,110 @@ public class Parser {
                         nextIndex = findNext(tokens, start, next);
                     }
 
-                    if(next == null) {
-                        throw new ParsingException("Invalid collection assignment");
-                    }
+                    if(next != null) {
 
-                    VariableASTNode array = new VariableASTNode(token);
-                    List<ASTNode> indexNodes = new ArrayList<>();
+                        VariableASTNode array = new VariableASTNode(token);
+                        List<ASTNode> indexNodes = new ArrayList<>();
 
-                    for(List<String> index : indices) {
-                        List<String> postfix = infixToPostfix(index);
+                        for (List<String> index : indices) {
+                            List<String> postfix = infixToPostfix(index);
 
-                        indexNodes.add(postfixToAST(postfix, context));
-                    }
-
-                    Pair<List<String>, Integer> expression = fetchExpression(tokens, nextIndex + 1);
-
-                    List<String> postfix = infixToPostfix(expression.first);
-
-                    ASTNode value = postfixToAST(postfix, context);
-
-                    switch (next) {
-                        case "=" -> {
-                            body.addNode(new CollectionSetASTNode(
-                                    array,
-                                    indexNodes,
-                                    value
-                            ));
-
-                            i = expression.second;
-
-                            continue;
+                            indexNodes.add(postfixToAST(postfix, context));
                         }
-                        case "+=" -> {
-                            body.addNode(new CollectionSetASTNode(
-                                    array,
-                                    indexNodes,
-                                    new OperationASTNode(
-                                            new CollectionAccessASTNode(array, indexNodes),
-                                            value,
-                                            OperationType.ADD
-                                    )
-                            ));
 
-                            i = expression.second;
+                        Pair<List<String>, Integer> expression = fetchExpression(tokens, nextIndex + 1);
 
-                            continue;
-                        }
-                        case "-=" -> {
-                            body.addNode(new CollectionSetASTNode(
-                                    array,
-                                    indexNodes,
-                                    new OperationASTNode(
-                                            new CollectionAccessASTNode(array, indexNodes),
-                                            value,
-                                            OperationType.SUBTRACT
-                                    )
-                            ));
+                        List<String> postfix = infixToPostfix(expression.first);
 
-                            i = expression.second;
+                        ASTNode value = postfixToAST(postfix, context);
 
-                            continue;
-                        }
-                        case "*=" -> {
-                            body.addNode(new CollectionSetASTNode(
-                                    array,
-                                    indexNodes,
-                                    new OperationASTNode(
-                                            new CollectionAccessASTNode(array, indexNodes),
-                                            value,
-                                            OperationType.MULTIPLY
-                                    )
-                            ));
+                        switch (next) {
+                            case "=" -> {
+                                body.addNode(new CollectionSetASTNode(
+                                        array,
+                                        indexNodes,
+                                        value
+                                ));
 
-                            i = expression.second;
+                                i = expression.second;
 
-                            continue;
-                        }
-                        case "/=" -> {
-                            body.addNode(new CollectionSetASTNode(
-                                    array,
-                                    indexNodes,
-                                    new OperationASTNode(
-                                            new CollectionAccessASTNode(array, indexNodes),
-                                            value,
-                                            OperationType.DIVIDE
-                                    )
-                            ));
+                                continue;
+                            }
+                            case "+=" -> {
+                                body.addNode(new CollectionSetASTNode(
+                                        array,
+                                        indexNodes,
+                                        new OperationASTNode(
+                                                new CollectionAccessASTNode(array, indexNodes),
+                                                value,
+                                                OperationType.ADD
+                                        )
+                                ));
 
-                            i = expression.second;
+                                i = expression.second;
 
-                            continue;
-                        }
-                        case "%=" -> {
-                            body.addNode(new CollectionSetASTNode(
-                                    array,
-                                    indexNodes,
-                                    new OperationASTNode(
-                                            new CollectionAccessASTNode(array, indexNodes),
-                                            value,
-                                            OperationType.MODULO
-                                    )
-                            ));
+                                continue;
+                            }
+                            case "-=" -> {
+                                body.addNode(new CollectionSetASTNode(
+                                        array,
+                                        indexNodes,
+                                        new OperationASTNode(
+                                                new CollectionAccessASTNode(array, indexNodes),
+                                                value,
+                                                OperationType.SUBTRACT
+                                        )
+                                ));
 
-                            i = expression.second;
+                                i = expression.second;
 
-                            continue;
-                        }
-                        default -> {
-                            throw new ParsingException("Invalid collection assignment");
+                                continue;
+                            }
+                            case "*=" -> {
+                                body.addNode(new CollectionSetASTNode(
+                                        array,
+                                        indexNodes,
+                                        new OperationASTNode(
+                                                new CollectionAccessASTNode(array, indexNodes),
+                                                value,
+                                                OperationType.MULTIPLY
+                                        )
+                                ));
+
+                                i = expression.second;
+
+                                continue;
+                            }
+                            case "/=" -> {
+                                body.addNode(new CollectionSetASTNode(
+                                        array,
+                                        indexNodes,
+                                        new OperationASTNode(
+                                                new CollectionAccessASTNode(array, indexNodes),
+                                                value,
+                                                OperationType.DIVIDE
+                                        )
+                                ));
+
+                                i = expression.second;
+
+                                continue;
+                            }
+                            case "%=" -> {
+                                body.addNode(new CollectionSetASTNode(
+                                        array,
+                                        indexNodes,
+                                        new OperationASTNode(
+                                                new CollectionAccessASTNode(array, indexNodes),
+                                                value,
+                                                OperationType.MODULO
+                                        )
+                                ));
+
+                                i = expression.second;
+
+                                continue;
+                            }
                         }
                     }
                 }

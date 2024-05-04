@@ -27,10 +27,18 @@ public class CollectionAccessASTNode implements ASTNode {
             List<Object> list = (List<Object>) collection;
             int depth = indices.size();
             while (depth > 1) {
-                list = (List<Object>) list.get((int) Utils.cast(indices.get(indices.size() - depth), Integer.class));
+                int index = (int) Utils.cast(indices.get(indices.size() - depth), Integer.class);
+                if (index < 0) {
+                    index += list.size();
+                }
+                list = (List<Object>) list.get(index);
                 depth--;
             }
-            return list.get((int) Utils.cast(indices.get(indices.size() - 1), Integer.class));
+            int lastIndex = (int) Utils.cast(indices.get(indices.size() - 1), Integer.class);
+            if (lastIndex < 0) {
+                lastIndex += list.size();
+            }
+            return list.get(lastIndex);
         } else if (collection instanceof String string) {
             if (indices.size() == 1) {
                 return string.charAt((int) indices.get(0));

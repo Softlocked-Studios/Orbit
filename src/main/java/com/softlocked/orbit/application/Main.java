@@ -1,5 +1,7 @@
 package com.softlocked.orbit.application;
 
+import com.softlocked.aster.AsterRunner;
+import com.softlocked.aster.AsterWrapper;
 import com.softlocked.orbit.core.ast.ASTNode;
 import com.softlocked.orbit.interpreter.memory.GlobalContext;
 import com.softlocked.orbit.lexer.Lexer;
@@ -17,7 +19,38 @@ import java.util.NoSuchElementException;
 import java.util.Scanner;
 
 public class Main {
-    public static void main(String[] args) throws Exception {
+//    public static void main(String[] args) throws Exception {
+//
+//        // Aster example
+//        AsterWrapper wrapper = new AsterWrapper();
+//
+//        wrapper
+//                // a = 1000
+//                .PUSH(0) // Pushes 0 to the stack
+//                .COPY() // Copies the value at the top of the stack to the top of the stack
+//                .PUSH(10000000) // Pushes 10000000 to the stack
+//                .CMP() // Compares the top two values on the stack
+//                .JUMP_IF_GREATER_OR_EQUAL(+8) // Jump to the end if its greater or equal
+//                .PUSH(1) // Pushes 1 to the stack
+//                .ADD() // Adds the top two values on the stack
+//                .PUSH(1) // Pushes 1 to the stack
+//                .POP(0x00)
+//                .PUSH_VAR(0x00)
+//                .POP(0x01)
+//                .JUMP(-10) // Jumps back to the start of the loop
+//                .HALT(); // Halts the program
+//
+//
+//        AsterRunner runner = new AsterRunner(wrapper);
+//
+//        long time = System.currentTimeMillis();
+//
+//        //for (int i = 0; i < 100; i++) {
+//            runner.run();
+//        //}
+//
+//        System.out.println("Time: " + (System.currentTimeMillis() - time) + "ms");
+////
         if(args.length > 0) {
             if(args[0].equals("opkg")) {
                 if(args.length < 2) {
