@@ -1931,102 +1931,100 @@ public class Parser {
         for (int i = 0; i < infix.size(); i++) {
             String token = infix.get(i);
 
-            if (token.equals("{")) {
-                int end = getPair(infix, i, "{", "}");
+            switch (token) {
+                case "{" -> {
+                    int end = getPair(infix, i, "{", "}");
 
-                postfixExpression.add("{");
+                    postfixExpression.add("{");
 
-                List<String> subExpression = new ArrayList<>(infix.subList(i + 1, end));
+                    List<String> subExpression = new ArrayList<>(infix.subList(i + 1, end));
 
-                int next = getNextSeparator(subExpression, 0);
-                while (next != -1) {
-                    int colon = subExpression.indexOf(":");
-                    int equals = subExpression.indexOf("=");
+                    int next = getNextSeparator(subExpression, 0);
+                    while (next != -1) {
+                        int colon = subExpression.indexOf(":");
+                        int equals = subExpression.indexOf("=");
 
-                    if (equals != -1 && (colon == -1 || equals < colon)) {
-                        colon = equals;
+                        if (equals != -1 && (colon == -1 || equals < colon)) {
+                            colon = equals;
+                        }
+
+                        List<String> keyList = subExpression.subList(0, colon);
+                        List<String> valueList = subExpression.subList(colon + 1, next);
+
+                        postfixExpression.addAll(infixToPostfix(keyList));
+                        postfixExpression.add("=");
+                        postfixExpression.addAll(infixToPostfix(valueList));
+
+                        subExpression = subExpression.subList(next + 1, subExpression.size());
+                        next = getNextSeparator(subExpression, 0);
+
+                        postfixExpression.add(",");
                     }
 
-                    List<String> keyList = subExpression.subList(0, colon);
-                    List<String> valueList = subExpression.subList(colon + 1, next);
+                    if (!subExpression.isEmpty()) {
+                        int colon = subExpression.indexOf(":");
+                        int equals = subExpression.indexOf("=");
 
-                    postfixExpression.addAll(infixToPostfix(keyList));
-                    postfixExpression.add("=");
-                    postfixExpression.addAll(infixToPostfix(valueList));
+                        if (equals != -1 && (colon == -1 || equals < colon)) {
+                            colon = equals;
+                        }
 
-                    subExpression = subExpression.subList(next + 1, subExpression.size());
-                    next = getNextSeparator(subExpression, 0);
+                        List<String> keyList = subExpression.subList(0, colon);
+                        List<String> valueList = subExpression.subList(colon + 1, subExpression.size());
 
-                    postfixExpression.add(",");
-                }
-
-                if(!subExpression.isEmpty()) {
-                    int colon = subExpression.indexOf(":");
-                    int equals = subExpression.indexOf("=");
-
-                    if (equals != -1 && (colon == -1 || equals < colon)) {
-                        colon = equals;
+                        postfixExpression.addAll(infixToPostfix(keyList));
+                        postfixExpression.add("=");
+                        postfixExpression.addAll(infixToPostfix(valueList));
                     }
 
-                    List<String> keyList = subExpression.subList(0, colon);
-                    List<String> valueList = subExpression.subList(colon + 1, subExpression.size());
+                    postfixExpression.add("}");
 
-                    postfixExpression.addAll(infixToPostfix(keyList));
-                    postfixExpression.add("=");
-                    postfixExpression.addAll(infixToPostfix(valueList));
+                    i = end;
+
+                    continue;
                 }
+                case "[" -> {
+                    int end = getPair(infix, i, "[", "]");
 
-                postfixExpression.add("}");
+                    postfixExpression.add("[");
 
-                i = end;
+                    List<String> subExpression = new ArrayList<>(infix.subList(i + 1, end));
 
-                continue;
-            }
+                    int next = getNextSeparator(subExpression, 0);
+                    while (next != -1) {
+                        postfixExpression.addAll(infixToPostfix(subExpression.subList(0, next)));
+                        postfixExpression.add(",");
 
-            if (token.equals("[")) {
-                int end = getPair(infix, i, "[", "]");
+                        subExpression = subExpression.subList(next + 1, subExpression.size());
+                        next = getNextSeparator(subExpression, 0);
+                    }
 
-                postfixExpression.add("[");
+                    postfixExpression.addAll(infixToPostfix(subExpression));
 
-                List<String> subExpression = new ArrayList<>(infix.subList(i + 1, end));
+                    postfixExpression.add("]");
 
-                int next = getNextSeparator(subExpression, 0);
-                while (next != -1) {
-                    postfixExpression.addAll(infixToPostfix(subExpression.subList(0, next)));
-                    postfixExpression.add(",");
+                    i = end;
 
-                    subExpression = subExpression.subList(next + 1, subExpression.size());
-                    next = getNextSeparator(subExpression, 0);
+                    continue;
                 }
-
-                postfixExpression.addAll(infixToPostfix(subExpression));
-
-                postfixExpression.add("]");
-
-                i = end;
-
-                continue;
-            }
-
-            else if (token.equals(",") || token.equals("?") || token.equals("=")) {
-                while (!operatorStack.isEmpty() && !operatorStack.peek().equals("(")) {
-                    postfixExpression.add(operatorStack.pop());
+                case ",", "?", "=" -> {
+                    while (!operatorStack.isEmpty() && !operatorStack.peek().equals("(")) {
+                        postfixExpression.add(operatorStack.pop());
+                    }
+                    postfixExpression.add(token);
+                    continue;
                 }
-                postfixExpression.add(token);
-                continue;
-            }
-
-            else if (token.equals("!") || token.equals("~") || token.equals("@")) {
-                operatorStack.push(token);
-                continue;
-            }
-
-            else if (token.equals(";")) {
-                while (!operatorStack.isEmpty()) {
-                    postfixExpression.add(operatorStack.pop());
+                case "!", "~", "@" -> {
+                    operatorStack.push(token);
+                    continue;
                 }
+                case ";" -> {
+                    while (!operatorStack.isEmpty()) {
+                        postfixExpression.add(operatorStack.pop());
+                    }
 
-                return postfixExpression;
+                    return postfixExpression;
+                }
             }
 
             if (token.matches(Utils.IDENTIFIER_REGEX)) {

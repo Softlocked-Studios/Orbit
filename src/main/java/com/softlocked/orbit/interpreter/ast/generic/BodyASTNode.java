@@ -65,10 +65,8 @@ public class BodyASTNode implements ASTNode {
 
     @Override
     public String toString() {
-        StringBuilder builder = new StringBuilder();
-        for (ASTNode node : statements) {
-            builder.append(node.toString()).append("\n");
-        }
-        return builder.toString();
+        return "BodyASTNode{" +
+                "statements=" + Arrays.toString(statements) +
+                '}';
     }
 }
