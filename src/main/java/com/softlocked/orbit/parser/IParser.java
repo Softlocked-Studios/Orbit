@@ -39,12 +39,17 @@ public interface IParser {
      * @return A pair containing the length of the longest valid token sequence and the ASTNode object.
      */
     default Pair<Integer, ASTNode> checkOther(List<String> tokens, List<IParser> parsers) throws ParsingException{
-        for (int i = tokens.size(); i >= 0; i--) {
+        for (int i = tokens.size(); i > 0; i--) {
             for (IParser parser : parsers) {
                 if (parser.isValid(tokens.subList(0, i))) {
                     return new Pair<>(i, parser.parse(tokens.subList(0, i), parsers));
                 }
             }
+        }
+
+        // If /n or ;, return nothing and give next token
+        if(tokens.get(0).equals("\n") || tokens.get(0).equals(";")) {
+            return new Pair<>(1, null);
         }
         throw new RuntimeException("No valid parser found for the given tokens.");
     }

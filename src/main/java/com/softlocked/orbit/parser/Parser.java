@@ -18,7 +18,6 @@ import com.softlocked.orbit.interpreter.ast.variable.collection.CollectionAccess
 import com.softlocked.orbit.interpreter.ast.variable.collection.CollectionSetASTNode;
 import com.softlocked.orbit.interpreter.function.ClassConstructor;
 import com.softlocked.orbit.interpreter.function.NativeFunction;
-import com.softlocked.orbit.interpreter.function.coroutine.Coroutine;
 import com.softlocked.orbit.interpreter.function.coroutine.CoroutineFunction;
 import com.softlocked.orbit.memory.ILocalContext;
 import com.softlocked.orbit.opm.ast.pkg.ImportFileASTNode;
@@ -422,7 +421,7 @@ public class Parser {
 
                             List<Pair<String, Variable.Type>> arguments = new ArrayList<>();
 
-                            int nextComma = getNextSeparator(params, 0);
+                            int nextComma = getNextSeparator(params);
 
                             while (nextComma != -1) {
                                 List<String> subList = params.subList(0, nextComma);
@@ -438,7 +437,7 @@ public class Parser {
                                 }
 
                                 params = params.subList(nextComma + 1, params.size());
-                                nextComma = getNextSeparator(params, 0);
+                                nextComma = getNextSeparator(params);
                             }
 
                             if (!params.isEmpty()) {
@@ -719,7 +718,7 @@ public class Parser {
 
                                 List<Pair<String, Variable.Type>> arguments = new ArrayList<>();
 
-                                int nextComma = getNextSeparator(params, 0);
+                                int nextComma = getNextSeparator(params);
 
                                 while (nextComma != -1) {
                                     List<String> subList = params.subList(0, nextComma);
@@ -735,7 +734,7 @@ public class Parser {
                                     }
 
                                     params = params.subList(nextComma + 1, params.size());
-                                    nextComma = getNextSeparator(params, 0);
+                                    nextComma = getNextSeparator(params);
                                 }
 
                                 if (!params.isEmpty()) {
@@ -843,7 +842,7 @@ public class Parser {
 
                     List<Pair<String, Variable.Type>> arguments = new ArrayList<>();
 
-                    int nextComma = getNextSeparator(params, 0);
+                    int nextComma = getNextSeparator(params);
 
                     while (nextComma != -1) {
                         List<String> subList = params.subList(0, nextComma);
@@ -859,7 +858,7 @@ public class Parser {
                         }
 
                         params = params.subList(nextComma + 1, params.size());
-                        nextComma = getNextSeparator(params, 0);
+                        nextComma = getNextSeparator(params);
                     }
 
                     if(!params.isEmpty()) {
@@ -976,7 +975,7 @@ public class Parser {
 
                                     List<Pair<String, Variable.Type>> arguments = new ArrayList<>();
 
-                                    int nextComma = getNextSeparator(params, 0);
+                                    int nextComma = getNextSeparator(params);
 
                                     while (nextComma != -1) {
                                         List<String> subList = params.subList(0, nextComma);
@@ -992,7 +991,7 @@ public class Parser {
                                         }
 
                                         params = params.subList(nextComma + 1, params.size());
-                                        nextComma = getNextSeparator(params, 0);
+                                        nextComma = getNextSeparator(params);
                                     }
 
                                     if (!params.isEmpty()) {
@@ -1939,7 +1938,7 @@ public class Parser {
 
                     List<String> subExpression = new ArrayList<>(infix.subList(i + 1, end));
 
-                    int next = getNextSeparator(subExpression, 0);
+                    int next = getNextSeparator(subExpression);
                     while (next != -1) {
                         int colon = subExpression.indexOf(":");
                         int equals = subExpression.indexOf("=");
@@ -1956,7 +1955,7 @@ public class Parser {
                         postfixExpression.addAll(infixToPostfix(valueList));
 
                         subExpression = subExpression.subList(next + 1, subExpression.size());
-                        next = getNextSeparator(subExpression, 0);
+                        next = getNextSeparator(subExpression);
 
                         postfixExpression.add(",");
                     }
@@ -1990,13 +1989,13 @@ public class Parser {
 
                     List<String> subExpression = new ArrayList<>(infix.subList(i + 1, end));
 
-                    int next = getNextSeparator(subExpression, 0);
+                    int next = getNextSeparator(subExpression);
                     while (next != -1) {
                         postfixExpression.addAll(infixToPostfix(subExpression.subList(0, next)));
                         postfixExpression.add(",");
 
                         subExpression = subExpression.subList(next + 1, subExpression.size());
-                        next = getNextSeparator(subExpression, 0);
+                        next = getNextSeparator(subExpression);
                     }
 
                     postfixExpression.addAll(infixToPostfix(subExpression));
@@ -2144,6 +2143,25 @@ public class Parser {
                 continue;
             }
 
+            else if (token.equals("(")) {
+                int pair = getPair(postfix, i, "(", ")");
+
+                stack.push(postfixToAST(postfix.subList(i + 1, pair), context));
+
+                i = pair;
+
+                continue;
+            }
+
+            // If the token is - or +, but there is only 1 element on the stack, treat it as a prefix, and apply it to 0
+            else if (token.equals("@-") || token.equals("@+")) {
+                ASTNode node = stack.pop();
+
+                stack.push(new OperationASTNode(new ValueASTNode(0), node, OperationType.fromSymbol(token.substring(1))));
+
+                continue;
+            }
+
             else if (OperationType.fromSymbol(token) != null) {
                 ASTNode right = stack.pop();
                 ASTNode left = stack.pop();
@@ -2245,13 +2263,13 @@ public class Parser {
 
                 List<String> subExpression = postfix.subList(i + 1, pair);
 
-                int next = getNextSeparator(subExpression, 0);
+                int next = getNextSeparator(subExpression);
                 while (next != -1) {
                     List<String> subList = subExpression.subList(0, next);
                     list.add(postfixToAST(subList, context));
 
                     subExpression = subExpression.subList(next + 1, subExpression.size());
-                    next = getNextSeparator(subExpression, 0);
+                    next = getNextSeparator(subExpression);
                 }
 
                 if (!subExpression.isEmpty()) {
@@ -2287,7 +2305,7 @@ public class Parser {
 
                 List<String> subExpression = postfix.subList(i + 1, pair);
 
-                int next = getNextSeparator(subExpression, 0);
+                int next = getNextSeparator(subExpression);
                 while (next != -1) {
                     int colon = subExpression.indexOf(":");
                     int equals = subExpression.indexOf("=");
@@ -2319,7 +2337,7 @@ public class Parser {
 
                     subExpression = subExpression.subList(next + 1, subExpression.size());
 
-                    next = getNextSeparator(subExpression, 0);
+                    next = getNextSeparator(subExpression);
                 }
 
                 if (!subExpression.isEmpty()) {
@@ -2375,41 +2393,6 @@ public class Parser {
                 continue;
             }
 
-            else if (token.equals("(")) {
-                ASTNode func = stack.pop();
-
-                if(!(func instanceof VariableASTNode)) {
-                    throw new ParsingException("Expected identifier before function call");
-                }
-
-                String name = ((VariableASTNode) func).name();
-
-                List<ASTNode> params = new ArrayList<>();
-
-                int pair = getPair(postfix, i, "(", ")");
-
-                List<String> subExpression = postfix.subList(i + 1, pair);
-
-                int next = getNextSeparator(subExpression, 0);
-                while (next != -1) {
-                    List<String> subList = subExpression.subList(0, next);
-                    params.add(postfixToAST(subList, context));
-
-                    subExpression = subExpression.subList(next + 1, subExpression.size());
-                    next = getNextSeparator(subExpression, 0);
-                }
-
-                if (!subExpression.isEmpty()) {
-                    params.add(postfixToAST(subExpression, context));
-                }
-
-                stack.push(new FunctionCallASTNode(name, params));
-
-                i = pair;
-
-                continue;
-            }
-
             else {
                 stack.push(new VariableASTNode(token));
             }
@@ -2442,9 +2425,9 @@ public class Parser {
     }
 
     // next comma, that is on the same layer (so if there's depth of parenthesis or brackets, it will ignore them)
-    private static int getNextSeparator(List<String> tokens, int start) {
+    private static int getNextSeparator(List<String> tokens) {
         int depth = 0;
-        for (int i = start; i < tokens.size(); i++) {
+        for (int i = 0; i < tokens.size(); i++) {
             String token = tokens.get(i);
             if (token.equals("(") || token.equals("[") || token.equals("{")) {
                 depth++;

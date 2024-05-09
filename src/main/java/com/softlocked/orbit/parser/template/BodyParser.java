@@ -1,4 +1,4 @@
-package com.softlocked.orbit.parser.base;
+package com.softlocked.orbit.parser.template;
 
 import com.softlocked.orbit.core.ast.ASTNode;
 import com.softlocked.orbit.core.exception.ParsingException;
@@ -10,7 +10,6 @@ import java.util.List;
 
 public class BodyParser implements IParser {
     private final String[] pairs = new String[]{"{", "}", "then", "end", "then", "else", "else", "end", "do", "end", "does", "end"};
-
 
     @Override
     public ASTNode parse(List<String> tokens, List<IParser> parsers) throws ParsingException {

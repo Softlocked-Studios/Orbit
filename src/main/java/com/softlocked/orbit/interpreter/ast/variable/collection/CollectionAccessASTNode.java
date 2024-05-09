@@ -58,4 +58,12 @@ public class CollectionAccessASTNode implements ASTNode {
             throw new RuntimeException("Invalid collection type for access");
         }
     }
+
+    @Override
+    public String toString() {
+        return "CollectionAccessASTNode{" +
+                "collection=" + collection +
+                ", indices=" + indices +
+                '}';
+    }
 }

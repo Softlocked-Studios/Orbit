@@ -27,8 +27,11 @@ public enum OperationType {
     EQUALS_TYPE("==="),
     REF(":"),
 
-    // Unused operators. They are here for operator overloading only
-    CLONE("@");
+    CLONE("@"),
+
+    // FOR INTERNAL USE ONLY
+    PREFIX_ADD("@+"),
+    PREFIX_SUBTRACT("@-");
 
     private final String symbol;
 

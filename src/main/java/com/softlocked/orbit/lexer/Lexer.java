@@ -128,7 +128,7 @@ public class Lexer {
                 }
 
                 // 3) numbers (ints are supported by default, but combine numbers if they are separated by a '.' and additionally if there's "0x" at the start, it's a hex number)
-                if (token.matches("-?[0-9]+")) {
+                if (token.matches("[0-9]+")) {
                     if (i + 1 < tokens.size()) {
                         String nextToken = tokens.get(i + 1);
 
@@ -136,7 +136,7 @@ public class Lexer {
                             if (i + 2 < tokens.size()) {
                                 String nextNextToken = tokens.get(i + 2);
 
-                                if (nextNextToken.matches("-?[0-9]+")) {
+                                if (nextNextToken.matches("[0-9]+")) {
                                     tokens.set(i, token + "." + nextNextToken);
                                     tokens.remove(i + 1);
                                     tokens.remove(i + 1);
@@ -387,7 +387,7 @@ public class Lexer {
             sb.append(c);
 
             next();
-        } catch (Exception ignored) {} // This is a really awful way to deal with this, but who cares?
+        } catch (Exception ignored) {}
 
         return sb.toString();
     }
@@ -427,6 +427,6 @@ public class Lexer {
     }
 
     public static boolean isNumeric(String token) {
-        return token.matches("-?\\d+(\\.\\d+)?") || token.matches("0x[0-9a-fA-F]+") || token.matches("0b[01]+");
+        return token.matches("\\d+(\\.\\d+)?") || token.matches("0x[0-9a-fA-F]+") || token.matches("0b[01]+");
     }
 }

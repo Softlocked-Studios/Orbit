@@ -57,6 +57,10 @@ public class BodyASTNode implements ASTNode {
     }
 
     public void addNode(ASTNode node) {
+        if (node == null) {
+            return;
+        }
+
         ASTNode[] newStatements = new ASTNode[statements.length + 1];
         System.arraycopy(statements, 0, newStatements, 0, statements.length);
         newStatements[statements.length] = node;

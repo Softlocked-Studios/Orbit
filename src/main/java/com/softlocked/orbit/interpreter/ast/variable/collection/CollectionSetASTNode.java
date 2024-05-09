@@ -49,4 +49,13 @@ public class CollectionSetASTNode implements ASTNode {
 
         return value;
     }
+
+    @Override
+    public String toString() {
+        return "CollectionSetASTNode{" +
+                "collection=" + collection +
+                ", indices=" + indices +
+                ", value=" + value +
+                '}';
+    }
 }
