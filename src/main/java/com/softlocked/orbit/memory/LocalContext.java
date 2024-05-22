@@ -5,6 +5,9 @@ import com.softlocked.orbit.core.datatypes.functions.IFunction;
 import com.softlocked.orbit.interpreter.memory.GlobalContext;
 
 import java.util.HashMap;
+import java.util.Map;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 /**
  * Generic implementation of ILocalContext
@@ -14,7 +17,7 @@ public class LocalContext implements ILocalContext {
     protected final ILocalContext parent;
     protected final GlobalContext root;
 
-    protected final HashMap<String, Variable> variables = new HashMap<>();
+    protected final Map<String, Variable> variables = new TreeMap<>();
 
     public LocalContext(ILocalContext parent) {
         this.parent = parent;

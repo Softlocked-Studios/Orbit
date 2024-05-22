@@ -16,6 +16,8 @@ public interface IFunction extends ASTNode {
 
     Object call(ILocalContext context, List<Object> args);
 
+    ASTNode getBody();
+
     @Override
     default Object evaluate(ILocalContext context) {
         context.addFunction(this);

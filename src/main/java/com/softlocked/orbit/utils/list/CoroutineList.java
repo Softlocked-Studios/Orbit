@@ -1,10 +1,9 @@
-package com.softlocked.orbit.utils;
+package com.softlocked.orbit.utils.list;
 
 import com.softlocked.orbit.interpreter.function.coroutine.Coroutine;
 
 import java.util.AbstractList;
 import java.util.Iterator;
-import java.util.ListIterator;
 
 /**
  * A list implementation that is designed for iterating over values yielded by a coroutine.

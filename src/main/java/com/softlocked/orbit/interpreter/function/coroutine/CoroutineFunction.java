@@ -27,8 +27,4 @@ public class CoroutineFunction extends OrbitFunction {
 
         return new Coroutine(context, this, args);
     }
-
-    public ASTNode getBody() {
-        return body;
-    }
 }

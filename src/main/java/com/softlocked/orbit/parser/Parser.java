@@ -1867,8 +1867,10 @@ public class Parser {
 
             boolean b = token.equals("!") || token.equals("~") || token.equals("@");
 
-            if (awaitingStartOperator && b) {
-                expression.add(token);
+            if (awaitingStartOperator && (b || token.equals("+") || token.equals("-"))) {
+                if(token.equals("+")) expression.add("@+");
+                else if(token.equals("-")) expression.add("@-");
+                else expression.add(token);
                 continue;
             }
 
@@ -1901,7 +1903,7 @@ public class Parser {
                     throw new ParsingException("Unmatched parenthesis");
                 }
 
-                List<String> subExpression = tokens.subList(i + 1, getPair);
+                List<String> subExpression = new ArrayList<>(tokens.subList(i + 1, getPair));
                 subExpression.removeIf(s -> s.equals("\n") || s.equals("\r"));
 
                 expression.add(token);
@@ -2013,7 +2015,7 @@ public class Parser {
                     postfixExpression.add(token);
                     continue;
                 }
-                case "!", "~", "@" -> {
+                case "!", "~", "@", "@-", "@+" -> {
                     operatorStack.push(token);
                     continue;
                 }
@@ -2143,16 +2145,6 @@ public class Parser {
                 continue;
             }
 
-            else if (token.equals("(")) {
-                int pair = getPair(postfix, i, "(", ")");
-
-                stack.push(postfixToAST(postfix.subList(i + 1, pair), context));
-
-                i = pair;
-
-                continue;
-            }
-
             // If the token is - or +, but there is only 1 element on the stack, treat it as a prefix, and apply it to 0
             else if (token.equals("@-") || token.equals("@+")) {
                 ASTNode node = stack.pop();
@@ -2175,7 +2167,6 @@ public class Parser {
                         stack.push(new ValueASTNode(stack.pop().evaluate(null)));
                     }
 
-                    continue;
                 } else {
                     stack.push(new ReferenceASTNode(left, right));
 
@@ -2183,8 +2174,8 @@ public class Parser {
                         throw new ParsingException("Invalid reference");
                     }
 
-                    continue;
                 }
+                continue;
             }
 
             else if (token.equals("?")) {
@@ -2393,6 +2384,41 @@ public class Parser {
                 continue;
             }
 
+            else if (token.equals("(")) {
+                ASTNode func = stack.pop();
+
+                if(!(func instanceof VariableASTNode)) {
+                    throw new ParsingException("Expected identifier before function call");
+                }
+
+                String name = ((VariableASTNode) func).name();
+
+                List<ASTNode> params = new ArrayList<>();
+
+                int pair = getPair(postfix, i, "(", ")");
+
+                List<String> subExpression = postfix.subList(i + 1, pair);
+
+                int next = getNextSeparator(subExpression);
+                while (next != -1) {
+                    List<String> subList = subExpression.subList(0, next);
+                    params.add(postfixToAST(subList, context));
+
+                    subExpression = subExpression.subList(next + 1, subExpression.size());
+                    next = getNextSeparator(subExpression);
+                }
+
+                if (!subExpression.isEmpty()) {
+                    params.add(postfixToAST(subExpression, context));
+                }
+
+                stack.push(new FunctionCallASTNode(name, params));
+
+                i = pair;
+
+                continue;
+            }
+
             else {
                 stack.push(new VariableASTNode(token));
             }
@@ -2418,7 +2444,7 @@ public class Parser {
             case "+", "-" -> 8;
             case "*", "/", "%" -> 9;
             case "**" -> 10;
-            case "~", "!" -> 11;
+            case "~", "!", "@-", "@+" -> 11;
             case ":", "@" -> 12;
             default -> -1;
         };

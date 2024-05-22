@@ -43,6 +43,11 @@ public class ClassConstructor implements IFunction {
         return false;
     }
 
+    @Override
+    public ASTNode getBody() {
+        return body;
+    }
+
     public ClassConstructor(int argsCount, List<Pair<String, Variable.Type>> args, ASTNode body) {
         this.argsCount = argsCount;
         this.args.addAll(args);

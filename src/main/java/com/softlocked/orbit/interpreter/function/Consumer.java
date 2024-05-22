@@ -29,4 +29,8 @@ public class Consumer {
 
         throw new RuntimeException("Invalid function in consumer");
     }
+
+    public ASTNode getBody() {
+        return body;
+    }
 }

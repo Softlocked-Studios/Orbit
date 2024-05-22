@@ -1,4 +1,4 @@
-package com.softlocked.orbit.utils;
+package com.softlocked.orbit.utils.list;
 
 import java.util.AbstractList;
 import java.util.Iterator;

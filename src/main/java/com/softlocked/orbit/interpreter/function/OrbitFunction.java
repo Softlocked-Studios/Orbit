@@ -65,6 +65,11 @@ public class OrbitFunction implements IFunction {
     }
 
     @Override
+    public ASTNode getBody() {
+        return body;
+    }
+
+    @Override
     public Object call(ILocalContext context, List<Object> args) {
         for (int i = 0; i < args.size(); i++) {
             Object value = Utils.cast(args.get(i), this.args.get(i).second.getJavaClass());

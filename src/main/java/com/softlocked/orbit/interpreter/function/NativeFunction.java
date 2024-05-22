@@ -1,5 +1,6 @@
 package com.softlocked.orbit.interpreter.function;
 
+import com.softlocked.orbit.core.ast.ASTNode;
 import com.softlocked.orbit.core.datatypes.Variable;
 import com.softlocked.orbit.core.datatypes.functions.IFunction;
 import com.softlocked.orbit.memory.ILocalContext;
@@ -36,6 +37,11 @@ public class NativeFunction implements IFunction {
         this.argsCount = args.size();
         this.returnType = returnType;
         this.args.addAll(args);
+    }
+
+    @Override
+    public ASTNode getBody() {
+        return null;
     }
 
     @Override

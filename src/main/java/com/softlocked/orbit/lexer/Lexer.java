@@ -57,23 +57,6 @@ public class Lexer {
             for (int i = 0; i < tokens.size(); i++) {
                 String token = tokens.get(i);
 
-                if (i < tokens.size() - 1 && token.equals("-") && isNumeric(tokens.get(i + 1))) {
-                    if (OperationType.fromSymbol(tokens.get(i - 1)) != null || tokens.get(i - 1).equals("(")) {
-                        tokens.set(i + 1, "-" + tokens.get(i + 1));
-                        tokens.remove(i);
-                        continue;
-                    }
-                }
-
-                // Edge case in which the minus is before the current token
-                if (i > 0 && tokens.get(i - 1).equals("-") && isNumeric(token)) {
-                    if (i - 2 < 0 || OperationType.fromSymbol(tokens.get(i - 2)) != null || tokens.get(i - 2).equals("(") || tokens.get(i - 2).equals(",") || tokens.get(i - 2).equals("[") || tokens.get(i - 2).equals("{") || tokens.get(i - 2).equals(":")) {
-                        tokens.set(i, "-" + token);
-                        tokens.remove(i - 1);
-                        continue;
-                    }
-                }
-
                 switch (token) {
                     // 2.1) ++, --, +=, -=, *=, /=, ==, !=, <=, >=, ===
                     case "+" -> {

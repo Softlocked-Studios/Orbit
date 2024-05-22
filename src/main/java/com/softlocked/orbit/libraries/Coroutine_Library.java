@@ -7,7 +7,7 @@ import com.softlocked.orbit.interpreter.memory.GlobalContext;
 import com.softlocked.orbit.java.OrbitJavaLibrary;
 import com.softlocked.orbit.memory.ILocalContext;
 import com.softlocked.orbit.memory.LocalContext;
-import com.softlocked.orbit.utils.CoroutineList;
+import com.softlocked.orbit.utils.list.CoroutineList;
 
 import java.util.List;
 
