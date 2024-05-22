@@ -1893,6 +1893,7 @@ public class Parser {
 
             if (b1) {
                 String e = token.equals("(") ? ")" : (token.equals("[") ? "]" : "}");
+
                 int getPair = getPair(tokens, i, token, e);
 
                 awaitingOperator = true;
@@ -1907,6 +1908,18 @@ public class Parser {
                 subExpression.removeIf(s -> s.equals("\n") || s.equals("\r"));
 
                 expression.add(token);
+
+                // If it's { and the token before was -> or =>, just put everything as it is until the end
+                if(token.equals("{")) {
+                    String prev = tokens.get(i - 1);
+                    if(prev != null && (prev.equals("->") || prev.equals("=>"))) {
+                        expression.addAll(subExpression);
+                        expression.add("}");
+
+                        i = getPair;
+                        continue;
+                    }
+                }
 
                 Pair<List<String>, Integer> subExpressionResult = fetchExpression(subExpression, 0);
                 expression.addAll(subExpressionResult.first);
@@ -1925,7 +1938,7 @@ public class Parser {
         return new Pair<>(expression, i);
     }
 
-    public static List<String> infixToPostfix(List<String> infix) {
+    public static List<String> infixToPostfix(List<String> infix) throws ParsingException {
         List<String> postfixExpression = new ArrayList<>();
         Stack<String> operatorStack = new Stack<>();
 
@@ -2037,10 +2050,43 @@ public class Parser {
 
                 operatorStack.push(token);
             } else if (token.equals("(")) {
+                // Check if at the end of the parenthesis there is -> or =>
+                int pair = getPair(infix, i, "(", ")");
+
+                String next = getNext(infix, pair + 1);
+
+                if(next != null && (next.equals("->") || next.equals("=>"))) {
+                    List<String> subExpression = infix.subList(i + 1, pair);
+
+                    // And in this case just add everything as it is
+                    postfixExpression.add("(");
+                    postfixExpression.addAll(subExpression);
+                    postfixExpression.add(")");
+                    postfixExpression.add(next);
+
+                    int nextIndex = findNext(infix, pair + 1, next);
+
+                    String nextNext = getNext(infix, nextIndex + 1);
+                    int nextNextIndex = findNext(infix, nextIndex + 1, nextNext);
+
+                    if(nextNext == null || !nextNext.equals("{")) {
+                        throw new ParsingException("Expected {");
+                    }
+
+                    int end = getPair(infix, nextNextIndex, "{", "}");
+
+                    postfixExpression.add("{");
+                    postfixExpression.addAll(infix.subList(nextNextIndex + 1, end));
+                    postfixExpression.add("}");
+
+                    i = end;
+
+                    continue;
+                }
+
                 // Check whether the last token is an identifier
                 if (!postfixExpression.isEmpty() && postfixExpression.get(postfixExpression.size() - 1).matches(Utils.IDENTIFIER_REGEX)) {
                     // Add all the operators to the postfix expression from this to next ")"
-                    int pair = getPair(infix, i, "(", ")");
 
                     List<String> subExpression = infix.subList(i + 1, pair);
 
@@ -2385,6 +2431,55 @@ public class Parser {
             }
 
             else if (token.equals("(")) {
+                int pair = getPair(postfix, i, "(", ")");
+
+                // First, check if at the end of the parenthesis there is -> or =>
+                String nextToken = getNext(postfix, pair + 1);
+                if(nextToken != null && (nextToken.equals("->") || nextToken.equals("=>"))) {
+                    // Now get the following expression. it should start with {, otherwise it's invalid and error
+                    String startToken = getNext(postfix, pair + 2);
+                    int startIndex = findNext(postfix, pair + 2, startToken);
+
+                    if(startToken != null && startToken.equals("{")) {
+                        int expressionEnd = getPair(postfix, startIndex, "{", "}");
+
+                        List<String> subExpression = postfix.subList(startIndex + 1, expressionEnd);
+
+                        ASTNode lambda = parse(subExpression, context);
+
+                        // Now parse what is inside the parenthesis as parameters
+                        List<String> params = postfix.subList(i + 1, pair);
+
+                        // Remove commas
+                        params.removeIf(s -> s.equals(","));
+
+                        // Throw an error if any of the parameters is not an identifier
+                        if(params.stream().anyMatch(s -> !s.matches(Utils.IDENTIFIER_REGEX))) {
+                            throw new ParsingException("Invalid lambda expression");
+                        }
+
+                        List<Pair<String, Variable.Type>> args = new ArrayList<>();
+                        for (String param : params) {
+                            args.add(new Pair<>(param, Variable.Type.ANY));
+                        }
+
+                        // Now make a function from the lambda
+                        stack.push(new OrbitFunction(
+                                null,
+                                args.size(),
+                                args,
+                                lambda,
+                                Variable.Type.ANY
+                        ));
+
+                        i = expressionEnd;
+
+                        continue;
+                    } else {
+                        throw new ParsingException("Invalid lambda expression");
+                    }
+                }
+
                 ASTNode func = stack.pop();
 
                 if(!(func instanceof VariableASTNode)) {
@@ -2394,8 +2489,6 @@ public class Parser {
                 String name = ((VariableASTNode) func).name();
 
                 List<ASTNode> params = new ArrayList<>();
-
-                int pair = getPair(postfix, i, "(", ")");
 
                 List<String> subExpression = postfix.subList(i + 1, pair);
 
@@ -2445,7 +2538,7 @@ public class Parser {
             case "*", "/", "%" -> 9;
             case "**" -> 10;
             case "~", "!", "@-", "@+" -> 11;
-            case ":", "@" -> 12;
+            case ":", "@", "->", "=>" -> 12;
             default -> -1;
         };
     }

@@ -12,6 +12,6 @@ public record VariableASTNode(String name) implements ASTNode {
         if (variable == null) {
             return null;
         }
-        return context.getVariable(name).getValue();
+        return variable.getValue();
     }
 }

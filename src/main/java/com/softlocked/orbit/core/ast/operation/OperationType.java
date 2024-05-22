@@ -29,6 +29,8 @@ public enum OperationType {
 
     CLONE("@"),
 
+    LAMBDA("->"),
+
     // FOR INTERNAL USE ONLY
     PREFIX_ADD("@+"),
     PREFIX_SUBTRACT("@-");
@@ -49,7 +51,8 @@ public enum OperationType {
             case "or" -> symbol = "||";
             case "not" -> symbol = "!";
             case "xor" -> symbol = "^";
-            case "is" -> symbol = "==";
+            case "is" -> symbol = "===";
+            case "=>" -> symbol = "->";
         }
         for (OperationType type : values()) {
             if (type.symbol.equals(symbol)) {

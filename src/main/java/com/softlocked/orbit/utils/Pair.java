@@ -7,7 +7,7 @@ import java.io.Serializable;
  * @param <T> First object
  * @param <U> Second object
  */
-public class Pair<T, U> implements Serializable {
+public class Pair<T, U> implements Serializable, Comparable<Pair<T, U>> {
     public T first;
     public U second;
 
@@ -37,5 +37,19 @@ public class Pair<T, U> implements Serializable {
         int result = first != null ? first.hashCode() : 0;
         result = 31 * result + (second != null ? second.hashCode() : 0);
         return result;
+    }
+
+    @Override
+    public int compareTo(Pair<T, U> o) {
+        // Compare first to first and second to second
+        if (first instanceof Comparable && second instanceof Comparable) {
+            int firstComparison = ((Comparable<T>) first).compareTo(o.first);
+            if (firstComparison != 0) {
+                return firstComparison;
+            }
+            return ((Comparable<U>) second).compareTo(o.second);
+        }
+
+        return 0;
     }
 }

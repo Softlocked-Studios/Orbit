@@ -36,7 +36,7 @@ import java.util.*;
  * @see LocalContext
  */
 public class GlobalContext extends LocalContext {
-    private final HashMap<Pair<String, Integer>, IFunction> functions = new HashMap<>();
+    private final Map<Pair<String, Integer>, IFunction> functions = new TreeMap<>();
 
     private final String parentPath;
     private final String packagePath;

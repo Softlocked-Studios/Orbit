@@ -278,6 +278,39 @@ public class Lexer {
                 }
             }
 
+            // One final pass, combine = with > to make =>, - with > to make -> and set 'or' to '||' and 'and' to '&&', 'not' to '!' xor to '^' and 'is' to '==='
+            for (int i = 0; i < tokens.size(); i++) {
+                String token = tokens.get(i);
+
+                switch (token) {
+                    case "=" -> {
+                        if (i + 1 < tokens.size()) {
+                            String nextToken = tokens.get(i + 1);
+
+                            if (nextToken.equals(">")) {
+                                tokens.set(i, "=>");
+                                tokens.remove(i + 1);
+                            }
+                        }
+                    }
+                    case "-" -> {
+                        if (i + 1 < tokens.size()) {
+                            String nextToken = tokens.get(i + 1);
+
+                            if (nextToken.equals(">")) {
+                                tokens.set(i, "->");
+                                tokens.remove(i + 1);
+                            }
+                        }
+                    }
+                    case "or" -> tokens.set(i, "||");
+                    case "and" -> tokens.set(i, "&&");
+                    case "not" -> tokens.set(i, "!");
+                    case "xor" -> tokens.set(i, "^");
+                    case "is" -> tokens.set(i, "===");
+                }
+            }
+
             // Remove all the empty tokens, or newlines
             tokens.removeIf(token -> token.isEmpty() || token.equals("\r") || token.equals("\n"));
 
