@@ -8,8 +8,10 @@ import com.softlocked.orbit.core.evaluator.Breakpoint;
 import com.softlocked.orbit.core.evaluator.Evaluator;
 import com.softlocked.orbit.core.exception.ParsingException;
 import com.softlocked.orbit.interpreter.ast.generic.TryCatchASTNode;
+import com.softlocked.orbit.interpreter.ast.object.address.AddressASTNode;
 import com.softlocked.orbit.interpreter.ast.object.ClassDefinitionASTNode;
 import com.softlocked.orbit.interpreter.ast.object.DecObjASTNode;
+import com.softlocked.orbit.interpreter.ast.object.address.AddressSetASTNode;
 import com.softlocked.orbit.interpreter.ast.operation.ReferenceASTNode;
 import com.softlocked.orbit.interpreter.ast.value.ValueASTNode;
 import com.softlocked.orbit.interpreter.ast.value.VariableASTNode;
@@ -2042,6 +2044,35 @@ public class Parser {
             }
 
             if (token.matches(Utils.IDENTIFIER_REGEX)) {
+                // lambdas but for single tokens
+                if(i + 1 < infix.size() && (infix.get(i + 1).equals("->") || infix.get(i + 1).equals("=>"))) {
+                    String next = infix.get(i + 1);
+
+                    postfixExpression.add("(");
+                    postfixExpression.add(token);
+                    postfixExpression.add(")");
+                    postfixExpression.add(next);
+
+                    int nextIndex = findNext(infix, i + 1, next);
+
+                    String nextNext = getNext(infix, nextIndex + 1);
+                    int nextNextIndex = findNext(infix, nextIndex + 1, nextNext);
+
+                    if(nextNext == null || !nextNext.equals("{")) {
+                        throw new ParsingException("Expected {");
+                    }
+
+                    int end = getPair(infix, nextNextIndex, "{", "}");
+
+                    postfixExpression.add("{");
+                    postfixExpression.addAll(infix.subList(nextNextIndex + 1, end));
+                    postfixExpression.add("}");
+
+                    i = end;
+
+                    continue;
+                }
+
                 postfixExpression.add(token);
             } else if (OperationType.fromSymbol(token) != null) {
                 while (!operatorStack.isEmpty() && OperationType.fromSymbol(operatorStack.peek()) != null && precedence(token) <= precedence(operatorStack.peek())) {
@@ -2182,6 +2213,16 @@ public class Parser {
 
                 OperationASTNode operation = new OperationASTNode(node, null, OperationType.fromSymbol(token));
 
+                if (operation.type() == OperationType.AT && node instanceof ValueASTNode value) {
+                    AddressASTNode address = new AddressASTNode(
+                            ((Number)(value.value())).intValue()
+                    );
+
+                    stack.push(address);
+
+                    continue;
+                }
+
                 if (node instanceof ValueASTNode) {
                     stack.push(new ValueASTNode(operation.evaluate(null)));
                 } else {
@@ -2196,6 +2237,22 @@ public class Parser {
                 ASTNode node = stack.pop();
 
                 stack.push(new OperationASTNode(new ValueASTNode(0), node, OperationType.fromSymbol(token.substring(1))));
+
+                continue;
+            }
+
+            else if (token.equals("<-")) {
+                ASTNode right = stack.pop();
+                ASTNode left = stack.pop();
+
+                if(!(left instanceof AddressASTNode addressASTNode)) {
+                    throw new ParsingException("Invalid assignment");
+                }
+
+                stack.push(new AddressSetASTNode(
+                        addressASTNode.address(),
+                        right
+                ));
 
                 continue;
             }

@@ -1,6 +1,7 @@
 package com.softlocked.orbit.libraries;
 
 import com.softlocked.orbit.core.datatypes.Variable;
+import com.softlocked.orbit.interpreter.function.Consumer;
 import com.softlocked.orbit.interpreter.function.NativeFunction;
 import com.softlocked.orbit.interpreter.memory.GlobalContext;
 import com.softlocked.orbit.java.JarLoader;
@@ -193,6 +194,22 @@ public class Standard_Library implements OrbitJavaLibrary {
             @Override
             public Object call(ILocalContext context, List<Object> args) {
                 System.gc();
+                return null;
+            }
+        });
+
+        // async
+        context.addFunction(new NativeFunction("async", List.of(Variable.Type.CONSUMER), Variable.Type.VOID) {
+            @Override
+            public Object call(ILocalContext context, List<Object> args) {
+                Consumer consumer = (Consumer) args.get(0);
+
+                Thread thread = new Thread(() -> {
+                    consumer.accept(context, new ArrayList<>());
+                });
+
+                thread.start();
+
                 return null;
             }
         });

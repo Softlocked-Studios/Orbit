@@ -77,6 +77,15 @@ public class CoroutineList extends AbstractList<Object> {
 
             @Override
             public Object next() {
+                if(coroutine.isAsync()) {
+                    while (coroutine.getReturnValue() == null) {
+                        try {
+                            Thread.sleep(1);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
                 return coroutine.resume();
             }
         };

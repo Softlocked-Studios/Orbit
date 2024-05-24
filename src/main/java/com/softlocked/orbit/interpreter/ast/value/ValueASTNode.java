@@ -7,9 +7,13 @@ import com.softlocked.orbit.utils.Utils;
 public record ValueASTNode(Object value) implements ASTNode {
     @Override
     public Object evaluate(ILocalContext context) {
-        if(this.value() instanceof String) {
-            return Utils.formatString((String) this.value());
+        try {
+            if (this.value() instanceof String) {
+                return Utils.formatString((String) this.value(), context);
+            }
+            return this.value();
+        } catch (Exception e) {
+            throw new RuntimeException("Error evaluating value: " + e.getMessage());
         }
-        return this.value();
     }
 }

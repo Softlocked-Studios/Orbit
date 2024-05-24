@@ -52,6 +52,14 @@ public record FunctionCallASTNode(String name, List<ASTNode> args) implements AS
                     for (int i = 0; i < evaluatedArgs.size(); i++) {
                         evaluatedArgs.set(i, Utils.cast(evaluatedArgs.get(i), function.getParameters().get(i).second.getJavaClass()));
                     }
+
+                Object result = function.call(context, evaluatedArgs);
+
+                if (result instanceof Breakpoint breakpoint) {
+                    return breakpoint.getValue();
+                }
+
+                return result;
             }
 
             Object result = function.call(localContext, evaluatedArgs);

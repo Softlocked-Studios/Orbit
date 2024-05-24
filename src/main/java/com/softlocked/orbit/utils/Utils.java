@@ -1,9 +1,16 @@
 package com.softlocked.orbit.utils;
 
 import com.google.gson.Gson;
+import com.softlocked.orbit.core.ast.ASTNode;
 import com.softlocked.orbit.core.datatypes.Variable;
 import com.softlocked.orbit.core.datatypes.classes.OrbitObject;
 import com.softlocked.orbit.core.evaluator.Evaluator;
+import com.softlocked.orbit.core.exception.ParsingException;
+import com.softlocked.orbit.interpreter.function.Consumer;
+import com.softlocked.orbit.interpreter.function.coroutine.Coroutine;
+import com.softlocked.orbit.lexer.Lexer;
+import com.softlocked.orbit.memory.ILocalContext;
+import com.softlocked.orbit.parser.Parser;
 
 import java.util.*;
 import java.util.regex.Matcher;
@@ -55,13 +62,32 @@ public class Utils {
     private static final Pattern CARRIAGE_RETURN_PATTERN = Pattern.compile("\\\\r");
     private static final Pattern QUOTE_PATTERN = Pattern.compile("\\\\\"");
 
-    public static String formatString(String s) {
+    public static String formatString(String s, ILocalContext context) throws ParsingException {
         String formattedString = NEWLINE_PATTERN.matcher(s).replaceAll("\n");
         formattedString = TAB_PATTERN.matcher(formattedString).replaceAll("\t");
         formattedString = CARRIAGE_RETURN_PATTERN.matcher(formattedString).replaceAll("\r");
         formattedString = QUOTE_PATTERN.matcher(formattedString).replaceAll("\"");
 
         formattedString = unescapeUnicode(formattedString);
+
+        // And lastly, if it contains '${...}', replace it with the value of the expression inside the brackets
+        String regex = "(?<!\\\\)\\$\\{[^{}]*\\}";
+        Matcher matcher = Pattern.compile(regex).matcher(formattedString);
+
+        while (matcher.find()) {
+            String expression = matcher.group().substring(2, matcher.group().length() - 1);
+
+            List<String> tokens = new Lexer(expression).tokenize();
+
+            ASTNode node = Parser.parse(tokens, context.getRoot());
+
+            Object value = node.evaluate(context);
+
+            formattedString = formattedString.replace(matcher.group(), cast(value, String.class).toString());
+        }
+
+        // Replace '\$' with '$'
+        formattedString = formattedString.replace("\\$", "$");
 
         return formattedString;
     }
@@ -90,6 +116,10 @@ public class Utils {
 
         if(original instanceof Variable && target.equals(Variable.class)) {
             return original;
+        }
+
+        if(original instanceof Coroutine && target.equals(Consumer.class)) {
+
         }
 
         if(target.equals(Variable.class)) {

@@ -8,6 +8,7 @@ import com.softlocked.orbit.interpreter.ast.generic.BodyASTNode;
 import com.softlocked.orbit.interpreter.ast.loops.WhileASTNode;
 import com.softlocked.orbit.interpreter.ast.loops.forloops.*;
 import com.softlocked.orbit.interpreter.ast.statement.ConditionalASTNode;
+import com.softlocked.orbit.interpreter.function.Consumer;
 import com.softlocked.orbit.interpreter.function.OrbitFunction;
 import com.softlocked.orbit.memory.ILocalContext;
 import com.softlocked.orbit.utils.Pair;
@@ -15,6 +16,8 @@ import com.softlocked.orbit.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class Coroutine {
     protected CoroutineFunction func;
@@ -26,6 +29,11 @@ public class Coroutine {
 
     protected List<Object> args;
 
+    // Async functionality
+    protected AtomicBoolean isAsync = new AtomicBoolean(false);
+    protected volatile AtomicReference<Object> returnValue = null;
+    protected List<Consumer> consumers = new ArrayList<>();
+
     public Coroutine(ILocalContext context, CoroutineFunction function, List<Object> args) {
         this.body = function.getBody();
         this.head = body;
@@ -35,6 +43,26 @@ public class Coroutine {
         this.func = function;
 
         this.args = args;
+    }
+
+    public boolean isAsync() {
+        return isAsync.get();
+    }
+
+    public void setAsync(boolean async) {
+        isAsync.set(async);
+    }
+
+    public void addConsumer(Consumer consumer) {
+        consumers.add(consumer);
+    }
+
+    public AtomicReference<Object> getReturnValue() {
+        return returnValue;
+    }
+
+    public void resetReturnValue() {
+        returnValue = null;
     }
 
     public CoroutineFunction getFunction() {
@@ -55,6 +83,12 @@ public class Coroutine {
             return null;
         }
 
+        if(isAsync.get() && returnValue != null) {
+            Object value = returnValue.get();
+            returnValue = null;
+            return value;
+        }
+
         BodyASTNode body = (BodyASTNode) this.body;
 
         if(head == body) {
@@ -71,6 +105,12 @@ public class Coroutine {
                 }
                 if (breakpoint.getType() == Breakpoint.Type.RETURN) {
                     finished = true;
+                }
+                if (isAsync.get()) {
+                    returnValue = new AtomicReference<>(breakpoint.getValue());
+                }
+                for (Consumer consumer : consumers) {
+                    consumer.accept(context, List.of(breakpoint.getValue()));
                 }
                 return breakpoint.getValue();
             }
@@ -124,6 +164,12 @@ public class Coroutine {
                             }
                         }
                     }
+                    if (isAsync.get()) {
+                        returnValue = new AtomicReference<>(breakpoint.getValue());
+                    }
+                    for (Consumer consumer : consumers) {
+                        consumer.accept(context, List.of(breakpoint.getValue()));
+                    }
                     return breakpoint.getValue();
                 }
             } else {
@@ -153,6 +199,12 @@ public class Coroutine {
                                 headContext = headContext == context ? context : headContext.getParent();
                             }
                         }
+                    }
+                    if (isAsync.get()) {
+                        returnValue = new AtomicReference<>(breakpoint.getValue());
+                    }
+                    for (Consumer consumer : consumers) {
+                        consumer.accept(context, List.of(breakpoint.getValue()));
                     }
                     return breakpoint.getValue();
                 }
@@ -194,6 +246,12 @@ public class Coroutine {
                         headContext = headContext == context ? context : headContext.getParent();
                     }
                 }
+            }
+            if (isAsync.get()) {
+                returnValue = new AtomicReference<>(breakpoint.getValue());
+            }
+            for (Consumer consumer : consumers) {
+                consumer.accept(context, List.of(breakpoint.getValue()));
             }
             return breakpoint.getValue();
         }
