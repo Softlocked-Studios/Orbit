@@ -15,6 +15,7 @@ import com.softlocked.orbit.interpreter.function.coroutine.Coroutine;
 import com.softlocked.orbit.java.OrbitJavaLibrary;
 import com.softlocked.orbit.lexer.Lexer;
 import com.softlocked.orbit.libraries.*;
+import com.softlocked.orbit.libraries.brainrot.Display_Library;
 import com.softlocked.orbit.memory.ILocalContext;
 import com.softlocked.orbit.memory.LocalContext;
 import com.softlocked.orbit.opm.ast.pkg.ImportFileASTNode;
@@ -87,6 +88,8 @@ public class GlobalContext extends LocalContext {
         builtInLibraries.add(new Input_Library());
 
         builtInLibraries.add(new Coroutine_Library());
+
+        builtInLibraries.add(new Display_Library());
     }
 
     public static Class<?> getPrimitiveType(String name) {

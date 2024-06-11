@@ -21,35 +21,6 @@ public record ForInASTNode(ASTNode init, ASTNode iterable, ASTNode body) impleme
         Variable variable = (Variable) this.init().evaluate(forContext);
         Object iterable = this.iterable().evaluate(forContext);
 
-        if (iterable instanceof ParallelList list) {
-            variable.setType(Variable.Type.ANY);
-
-            int size = list.size();
-            final int[] finishedIterations = {0};
-            int threadCount = list.getAllocatedThreads(); // add the extra thread for the main thread, which will not be counted in the loop
-            for (int i = 0; i < threadCount; i++) {
-                int finalI = i;
-                Thread thread = new Thread(() -> {
-                    LocalContext threadContext = new LocalContext(context);
-
-                    Variable threadVariable = new Variable(Variable.Type.ANY, null);
-                    threadContext.addVariable(((DecVarASTNode) init).variableName(), threadVariable);
-
-                    for (int j = finalI; j < size; j += threadCount) {
-                        if (finishedIterations[0] >= size) {
-                            return;
-                        }
-                        variable.setValue(list.get(j));
-
-                        this.body().evaluate(forContext);
-                        finishedIterations[0]++;
-                    }
-                });
-                thread.start();
-            }
-
-            return null;
-        } else
         if (iterable instanceof List<?> list) {
             variable.setType(Variable.Type.ANY);
             for (Object item : list) {

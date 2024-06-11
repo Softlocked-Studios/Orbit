@@ -1,5 +1,11 @@
 package com.softlocked.orbit.application;
 
+import com.softlocked.aster.AsterRunner;
+import com.softlocked.aster.AsterWrapper;
+import com.softlocked.orbit.core.ast.operation.OperationType;
+import com.softlocked.orbit.core.evaluator.Evaluator;
+import com.softlocked.orbit.interpreter.ast.operation.OperationASTNode;
+import com.softlocked.orbit.interpreter.ast.value.ValueASTNode;
 import com.softlocked.orbit.interpreter.memory.GlobalContext;
 import com.softlocked.orbit.opm.packager.OrbitPackage;
 import com.softlocked.orbit.parser.IParser;
@@ -16,29 +22,11 @@ import com.softlocked.orbit.project.OrbitREPL;
 import java.io.File;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
+
 
 public class Main {
     public static void main(String[] args) throws Exception {
-//    List<IParser> parsers = new ArrayList<>(List.of(
-//            new BodyParser(),
-//            ExpressionParser.INSTANCE,
-//            new ControlFlowParser(),
-//            new VarAssignParser(),
-//            new VarDeclareParser()
-//    ));
-//
-//    // Sort by priority (highest to lowest)
-//    parsers.sort(Comparator.comparingInt(IParser::getPriority).reversed());
-//
-//    List<String> test = new ArrayList<>(List.of("{", "const", "int", "a", "=", "5", ";", "}"));
-//    ProgramParser parser = new ProgramParser();
-//    long time = System.currentTimeMillis();
-//    System.out.println(parser.parse(test, parsers));
-//    System.out.println("Time: " + (System.currentTimeMillis() - time) + "ms");
-
         if(args.length > 0) {
             if(args[0].equals("opkg")) {
                 if(args.length < 2) {

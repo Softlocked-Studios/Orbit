@@ -16,6 +16,11 @@ public record AssignVarASTNode(String variableName, ASTNode value) implements AS
             throw new RuntimeException("Variable " + this.variableName() + " not found");
         }
 
+        if (variable.getType().getJavaClass().equals(Variable.class)) {
+            variable.setValue(value);
+
+            return variable;
+        }
         variable.setValue(Utils.cast(value, variable.getType().getJavaClass()));
 
         return variable;

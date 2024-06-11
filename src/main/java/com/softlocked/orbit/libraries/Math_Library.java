@@ -5,6 +5,7 @@ import com.softlocked.orbit.interpreter.function.NativeFunction;
 import com.softlocked.orbit.interpreter.memory.GlobalContext;
 import com.softlocked.orbit.java.OrbitJavaLibrary;
 import com.softlocked.orbit.memory.ILocalContext;
+import com.softlocked.orbit.utils.math.SimplexNoise;
 
 import java.util.List;
 
@@ -184,6 +185,14 @@ public class Math_Library implements OrbitJavaLibrary {
             @Override
             public Object call(ILocalContext context, List<Object> args) {
                 return Math.E;
+            }
+        });
+
+        // Perlin noise generation
+        context.addFunction(new NativeFunction("math.noise", List.of(Variable.Type.DOUBLE, Variable.Type.DOUBLE), Variable.Type.DOUBLE) {
+            @Override
+            public Object call(ILocalContext context, List<Object> args) {
+                return SimplexNoise.noise((double) args.get(0), (double) args.get(1));
             }
         });
     }

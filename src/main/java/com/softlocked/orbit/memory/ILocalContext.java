@@ -20,6 +20,8 @@ public interface ILocalContext {
 
     ILocalContext getParent();
 
+    void setParent(ILocalContext parent);
+
     GlobalContext getRoot();
 
     IFunction getFunction(String name, int parameterCount);

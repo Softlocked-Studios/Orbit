@@ -21,7 +21,7 @@ public class CollectionAccessASTNode implements ASTNode {
     @Override
     public Object evaluate(ILocalContext context) {
         Object collection = this.collection.evaluate(context);
-        List<Object> indices = this.indices.stream().map(index -> index.evaluate(context)).collect(Collectors.toList());
+        List<Object> indices = this.indices.stream().map(index -> index.evaluate(context)).toList();
 
         if (collection instanceof List) {
             List<Object> list = (List<Object>) collection;

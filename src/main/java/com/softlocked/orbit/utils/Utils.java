@@ -118,10 +118,6 @@ public class Utils {
             return original;
         }
 
-        if(original instanceof Coroutine && target.equals(Consumer.class)) {
-
-        }
-
         if(target.equals(Variable.class)) {
             return new Variable(Variable.Type.fromJavaClass(original.getClass()), original);
         }

@@ -73,4 +73,8 @@ public class BodyASTNode implements ASTNode {
                 "statements=" + Arrays.toString(statements) +
                 '}';
     }
+
+    public List<ASTNode> getStatements() {
+        return Arrays.asList(statements);
+    }
 }

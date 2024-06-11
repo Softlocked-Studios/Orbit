@@ -124,6 +124,55 @@ public class OrbitObject {
         return false;
     }
 
+    public boolean hasFunction(IFunction function) {
+        if (clazz.functions().containsValue(function)) {
+            return true;
+        }
+
+        if (clazz.superClasses() != null) {
+            for (OrbitClass superClass : clazz.superClasses()) {
+                if (superClass.functions().containsValue(function)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    public IFunction getFunction(String name, int argsCount) {
+        HashMap<Pair<String, Integer>, IFunction> functions = clazz.functions();
+
+        if (functions.containsKey(new Pair<>(name, argsCount))) {
+            return functions.get(new Pair<>(name, argsCount));
+        }
+
+        if (clazz.superClasses() != null) {
+            for (OrbitClass superClass : clazz.superClasses()) {
+                if (superClass.functions().containsKey(new Pair<>(name, argsCount))) {
+                    return superClass.functions().get(new Pair<>(name, argsCount));
+                }
+            }
+        }
+
+        return null;
+    }
+
+    public Object callFunction(IFunction function, List<Object> args) {
+        return callFunction(function, args, false);
+    }
+
+    public Object callFunction(IFunction function, List<Object> args, boolean superCall) {
+        LocalContext context = new LocalContext(rootContext);
+
+        // Add the fields to the context
+        for (String field : fields.keySet()) {
+            context.addVariable(field, fields.get(field));
+        }
+
+        return function.call(context, args);
+    }
+
     @Override
     public String toString() {
         String res = super.toString();

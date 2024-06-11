@@ -3,7 +3,6 @@ package com.softlocked.orbit.memory;
 import com.softlocked.orbit.core.datatypes.Variable;
 import com.softlocked.orbit.core.datatypes.functions.IFunction;
 import com.softlocked.orbit.interpreter.memory.GlobalContext;
-import com.softlocked.orbit.utils.BinaryMap;
 
 import java.util.Map;
 import java.util.TreeMap;
@@ -13,10 +12,10 @@ import java.util.TreeMap;
  * @see ILocalContext
  */
 public class LocalContext implements ILocalContext {
-    protected final ILocalContext parent;
+    protected ILocalContext parent;
     protected final GlobalContext root;
 
-    protected final Map<String, Variable> variables = new BinaryMap<>();
+    protected Map<String, Variable> variables = new TreeMap<>();
 
     public LocalContext(ILocalContext parent) {
         this.parent = parent;
@@ -66,6 +65,11 @@ public class LocalContext implements ILocalContext {
     @Override
     public ILocalContext getParent() {
         return parent;
+    }
+
+    @Override
+    public void setParent(ILocalContext parent) {
+        this.parent = parent;
     }
 
     @Override

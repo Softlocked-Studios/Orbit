@@ -14,16 +14,6 @@ import java.util.List;
 public class Eval_Library implements OrbitJavaLibrary {
     @Override
     public void load(GlobalContext context) {
-        // Function for deleting variables
-        context.addFunction(new NativeFunction("delete", List.of(Variable.Type.STRING), Variable.Type.VOID) {
-            @Override
-            public Object call(ILocalContext context, List<Object> args) {
-                context.removeVariable((String) args.get(0));
-
-                return null;
-            }
-        });
-
         // Function for deleting functions
         context.addFunction(new NativeFunction("unload", List.of(Variable.Type.STRING, Variable.Type.INT), Variable.Type.VOID) {
             @Override

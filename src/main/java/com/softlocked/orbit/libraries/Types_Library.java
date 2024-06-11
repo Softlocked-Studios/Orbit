@@ -159,7 +159,7 @@ public class Types_Library implements OrbitJavaLibrary {
             public Object call(ILocalContext context, List<Object> args) {
                 Variable ref = (Variable) args.get(0);
 
-                return ref.getType().getTypeName(ref.getValue());
+                return Variable.Type.getTypeName(ref.getValue());
             }
         });
 

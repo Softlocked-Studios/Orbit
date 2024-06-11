@@ -78,8 +78,8 @@ public class OrbitFunction implements IFunction {
 
         Object result = body.evaluate(context);
 
-        if(result instanceof Breakpoint) {
-            return ((Breakpoint) result).getValue();
+        if(result instanceof Breakpoint breakpoint) {
+            return breakpoint.getValue();
         } else {
             return result;
         }

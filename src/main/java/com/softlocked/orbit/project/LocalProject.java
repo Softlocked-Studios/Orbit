@@ -38,7 +38,7 @@ public class LocalProject implements Runner {
         this.entrypoint = path + File.separator + pkg.entrypoint();
 
         // Set package path
-        this.packagePath = path + File.separator + "modules" + File.separator;
+        this.packagePath = PackageDownloader.getPackagesPath();
 
         new File(this.packagePath).mkdirs();
     }
@@ -119,7 +119,7 @@ public class LocalProject implements Runner {
 
     public void install(String url, String name, String version, String baseFolder) throws Exception {
         try {
-            OrbitPackage downloaded = (OrbitPackage) PackageDownloader.download(url, name, version, baseFolder + File.separator + "modules", true);
+            OrbitPackage downloaded = (OrbitPackage) PackageDownloader.download(url, name, version, packagePath, true);
 
             // Add this to the current project's metadata.yml as a dependency
             String currentMetadataPath = baseFolder + File.separator + "metadata.yml";

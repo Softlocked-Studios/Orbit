@@ -113,12 +113,15 @@ public class PackageDownloader {
         return new File(filePath);
     }
 
-    private static void delete(File file) {
-        if (file.isDirectory()) {
-            for (File f : file.listFiles()) {
-                delete(f);
-            }
+    public static String getPackagesPath() {
+        File file = new File(System.getProperty("user.home") + File.separator + ".orbit");
+        if (!file.exists()) {
+            file.mkdirs();
         }
-        file.delete();
+        file = new File(file.getAbsolutePath() + File.separator + "packages");
+        if (!file.exists()) {
+            file.mkdirs();
+        }
+        return System.getProperty("user.home") + File.separator + ".orbit" + File.separator + "packages";
     }
 }

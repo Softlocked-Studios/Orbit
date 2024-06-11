@@ -24,11 +24,22 @@ public class Variable {
     }
 
     public Object getValue() {
+        if(value instanceof Variable var) {
+            return var.getValue();
+        }
+        return value;
+    }
+
+    public Object getRawValue() {
         return value;
     }
 
     public void setValue(Object value) {
-        this.value = value;
+        if(this.value instanceof Variable var) {
+            var.setValue(value);
+        } else {
+            this.value = value;
+        }
     }
 
     public void setType(Variable.Type type) {
