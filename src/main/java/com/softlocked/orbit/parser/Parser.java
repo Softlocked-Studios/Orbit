@@ -16,6 +16,7 @@ import com.softlocked.orbit.interpreter.ast.value.VariableASTNode;
 import com.softlocked.orbit.interpreter.ast.variable.DeleteVarASTNode;
 import com.softlocked.orbit.interpreter.ast.variable.collection.CollectionAccessASTNode;
 import com.softlocked.orbit.interpreter.ast.variable.collection.CollectionSetASTNode;
+import com.softlocked.orbit.interpreter.function.BFunction;
 import com.softlocked.orbit.interpreter.function.ClassConstructor;
 import com.softlocked.orbit.interpreter.function.NativeFunction;
 import com.softlocked.orbit.interpreter.function.coroutine.CoroutineFunction;
@@ -41,6 +42,7 @@ import com.softlocked.orbit.interpreter.function.OrbitFunction;
 import com.softlocked.orbit.interpreter.memory.GlobalContext;
 import com.softlocked.orbit.lexer.Lexer;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
 public class Parser {
@@ -2535,6 +2537,29 @@ public class Parser {
                 }
 
                 stack.push(new FunctionCallASTNode(name, params));
+
+                // Check whether there is a baked function with the same name and param count in the context
+                if(context.hasBakedFunction(name, params.size())) {
+                    stack.pop();
+
+                    Class<? extends BFunction> function = context.getBakedFunction(name, params.size());
+
+                    BFunction instance = null;
+
+                    try {
+                        instance = function.getConstructor().newInstance();
+                    } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+                        e.printStackTrace();
+                    }
+
+                    if(instance == null) {
+                        throw new ParsingException("Failed to create instance of baked function");
+                    }
+
+                    instance.setValues(params);
+
+                    stack.push(instance);
+                }
 
                 i = pair;
 

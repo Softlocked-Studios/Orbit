@@ -1,6 +1,8 @@
-package com.softlocked.orbit.libraries;
+package com.softlocked.orbit.libraries.Math;
 
+import com.softlocked.orbit.core.ast.ASTNode;
 import com.softlocked.orbit.core.datatypes.Variable;
+import com.softlocked.orbit.interpreter.function.BFunction;
 import com.softlocked.orbit.interpreter.function.NativeFunction;
 import com.softlocked.orbit.interpreter.memory.GlobalContext;
 import com.softlocked.orbit.java.OrbitJavaLibrary;
@@ -18,12 +20,22 @@ public class Math_Library implements OrbitJavaLibrary {
             public Object call(ILocalContext context, List<Object> args) {
                 return Math.sin((double) args.get(0));
             }
+
+            @Override
+            public <T extends BFunction> Class<T> getBakedFunction() {
+                return (Class<T>) BFunction_Sin.class;
+            }
         });
 
         context.addFunction(new NativeFunction("math.cos", List.of(Variable.Type.DOUBLE), Variable.Type.DOUBLE) {
             @Override
             public Object call(ILocalContext context, List<Object> args) {
                 return Math.cos((double) args.get(0));
+            }
+
+            @Override
+            public <T extends BFunction> Class<T> getBakedFunction() {
+                return (Class<T>) BFunction_Cos.class;
             }
         });
 

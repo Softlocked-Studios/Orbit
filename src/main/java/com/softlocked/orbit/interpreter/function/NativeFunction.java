@@ -79,4 +79,8 @@ public class NativeFunction implements IFunction {
     public Object call(ILocalContext context, java.util.List<Object> args) {
         throw new UnsupportedOperationException("Native functions must be overridden to be called");
     }
+
+    public <T extends BFunction> Class<T> getBakedFunction() {
+        return null;
+    }
 }

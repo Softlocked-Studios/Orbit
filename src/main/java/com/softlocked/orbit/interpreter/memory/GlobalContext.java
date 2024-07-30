@@ -8,6 +8,7 @@ import com.softlocked.orbit.core.datatypes.functions.IFunction;
 import com.softlocked.orbit.core.exception.ParsingException;
 import com.softlocked.orbit.interpreter.ast.value.VariableASTNode;
 import com.softlocked.orbit.interpreter.ast.variable.AssignVarASTNode;
+import com.softlocked.orbit.interpreter.function.BFunction;
 import com.softlocked.orbit.interpreter.function.ClassConstructor;
 import com.softlocked.orbit.interpreter.function.Consumer;
 import com.softlocked.orbit.interpreter.function.NativeFunction;
@@ -15,6 +16,7 @@ import com.softlocked.orbit.interpreter.function.coroutine.Coroutine;
 import com.softlocked.orbit.java.OrbitJavaLibrary;
 import com.softlocked.orbit.lexer.Lexer;
 import com.softlocked.orbit.libraries.*;
+import com.softlocked.orbit.libraries.Math.Math_Library;
 import com.softlocked.orbit.libraries.brainrot.Display_Library;
 import com.softlocked.orbit.memory.ILocalContext;
 import com.softlocked.orbit.memory.LocalContext;
@@ -38,6 +40,7 @@ import java.util.*;
  */
 public class GlobalContext extends LocalContext {
     private final Map<Pair<String, Integer>, IFunction> functions = new TreeMap<>();
+    private final Map<Pair<String, Integer>, Class<? extends BFunction>> bakedFunctions = new TreeMap<>();
 
     private final String parentPath;
     private final String packagePath;
@@ -116,6 +119,22 @@ public class GlobalContext extends LocalContext {
     @Override
     public void addFunction(IFunction function) {
         functions.put(new Pair<>(function.getName(), function.getParameterCount()), function);
+
+        if(function instanceof NativeFunction nativeFunction) {
+            Class<? extends BFunction> bakedFunction = nativeFunction.getBakedFunction();
+
+            if(bakedFunction != null) {
+                bakedFunctions.put(new Pair<>(function.getName(), function.getParameterCount()), bakedFunction);
+            }
+        }
+    }
+
+    public Class<? extends BFunction> getBakedFunction(String name, int parameterCount) {
+        return bakedFunctions.get(new Pair<>(name, parameterCount));
+    }
+
+    public boolean hasBakedFunction(String name, int parameterCount) {
+        return bakedFunctions.containsKey(new Pair<>(name, parameterCount));
     }
 
     public void removeFunction(String name, int parameterCount) {
