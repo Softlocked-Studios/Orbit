@@ -1108,7 +1108,6 @@ public class Parser {
                     }
 
                     if(next != null) {
-
                         VariableASTNode array = new VariableASTNode(token);
                         List<ASTNode> indexNodes = new ArrayList<>();
 
@@ -2349,18 +2348,6 @@ public class Parser {
                         list
                 ));
 
-                // Check whether all the params are values. If they are, then we can just evaluate them
-                if(list.stream().allMatch(astNode -> astNode instanceof ValueASTNode)) {
-                    stack.pop();
-
-                    List<Object> values = new ArrayList<>();
-                    for (ASTNode node : list) {
-                        values.add(node.evaluate(context));
-                    }
-
-                    stack.push(new ValueASTNode(values));
-                }
-
                 i = pair;
 
                 continue;
@@ -2443,18 +2430,6 @@ public class Parser {
                         "map.of",
                         map
                 ));
-
-                // Check whether all the params are values. If they are, then we can just evaluate them
-                if(map.stream().allMatch(astNode -> astNode instanceof ValueASTNode)) {
-                    stack.pop();
-
-                    Map<Object, Object> values = new HashMap<>();
-                    for (int j = 0; j < map.size(); j += 2) {
-                        values.put(map.get(j).evaluate(null), map.get(j + 1).evaluate(null));
-                    }
-
-                    stack.push(new ValueASTNode(values));
-                }
 
                 i = pair;
 

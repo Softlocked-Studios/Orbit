@@ -331,7 +331,7 @@ public class Evaluator {
                 }
             }
         } else {
-            if(obj.hasFunction("==", 1)) {
+            if(obj.hasFunction("==", 1) != null) {
                 return obj.callFunction("==", List.of(b));
             }
 
@@ -388,7 +388,7 @@ public class Evaluator {
                 }
             }
         } else {
-            if(obj.hasFunction("!=", 1)) {
+            if(obj.hasFunction("!=", 1) != null) {
                 return obj.callFunction("!=", List.of(b));
             }
 

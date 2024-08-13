@@ -47,11 +47,17 @@ public class CollectionAccessASTNode implements ASTNode {
             }
         } else if (collection instanceof Map) {
             Map<Object, Object> map = (Map<Object, Object>) collection;
-            if (indices.size() == 1) {
-                return map.get(indices.get(0));
-            } else {
-                throw new RuntimeException("Invalid number of indices for map access");
+            int depth = indices.size();
+            while (depth > 1) {
+                Object key = indices.get(indices.size() - depth);
+                if (!map.containsKey(key)) {
+                    throw new RuntimeException("Key not found in map");
+                }
+                map = (Map<Object, Object>) map.get(key);
+                depth--;
             }
+            Object lastKey = indices.get(indices.size() - 1);
+            return map.get(lastKey);
         } else if (collection instanceof OrbitObject obj) {
             return obj.callFunction("collection.get", List.of(indices));
         } else {

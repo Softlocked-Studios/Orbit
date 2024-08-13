@@ -106,22 +106,26 @@ public class OrbitObject {
         throw new RuntimeException("No function " + clazz.name() + ":" + name + " with " + args.size() + " arguments found");
     }
 
-    public boolean hasFunction(String name, int argsCount) {
+    public IFunction hasFunction(String name, int argsCount) {
         HashMap<Pair<String, Integer>, IFunction> functions = clazz.functions();
 
-        if (functions.containsKey(new Pair<>(name, argsCount))) {
-            return true;
+        IFunction func = functions.get(new Pair<>(name, argsCount));
+
+        if (func != null) {
+            return func;
         }
 
         if (clazz.superClasses() != null) {
             for (OrbitClass superClass : clazz.superClasses()) {
-                if (superClass.functions().containsKey(new Pair<>(name, argsCount))) {
-                    return true;
+                func = superClass.functions().get(new Pair<>(name, argsCount));
+
+                if (func != null) {
+                    return func;
                 }
             }
         }
 
-        return false;
+        return null;
     }
 
     public boolean hasFunction(IFunction function) {

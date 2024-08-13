@@ -36,11 +36,31 @@ public class CollectionSetASTNode implements ASTNode {
             list.set((int) Utils.cast(indices.get(indices.size() - 1), Integer.class), value);
         } else if (collection instanceof Map) {
             Map<Object, Object> map = (Map<Object, Object>) collection;
-            if (indices.size() == 1) {
-                map.put(indices.get(0), value);
-            } else {
-                throw new RuntimeException("Invalid number of indices for map access");
+            int depth = indices.size();
+            while (depth > 1) {
+                Object key = indices.get(indices.size() - depth);
+                if (!map.containsKey(key)) {
+                    throw new RuntimeException("Key not found in map");
+                }
+                map = (Map<Object, Object>) map.get(key);
+                depth--;
             }
+            map.put(indices.get(indices.size() - 1), value);
+        } else if (collection instanceof String string) {
+            char[] chars = string.toCharArray();
+
+            if (indices.size() == 1) {
+                int index = (int) Utils.cast(indices.get(0), Integer.class);
+
+                if (index < 0 || index >= chars.length) {
+                    throw new RuntimeException("Index out of bounds for string access");
+                }
+                chars[(int) indices.get(0)] = (char) Utils.cast(value, Character.class);
+            } else {
+                throw new RuntimeException("Invalid number of indices for string access");
+            }
+
+
         } else if (collection instanceof OrbitObject obj) {
             obj.callFunction("collection.set", List.of(indices, value));
         } else {

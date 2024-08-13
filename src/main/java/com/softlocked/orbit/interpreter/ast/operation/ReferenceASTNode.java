@@ -7,7 +7,9 @@ import com.softlocked.orbit.core.datatypes.functions.IFunction;
 import com.softlocked.orbit.interpreter.ast.value.ValueASTNode;
 import com.softlocked.orbit.interpreter.ast.value.VariableASTNode;
 import com.softlocked.orbit.interpreter.ast.variable.FunctionCallASTNode;
+import com.softlocked.orbit.interpreter.function.Consumer;
 import com.softlocked.orbit.memory.ILocalContext;
+import com.softlocked.orbit.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,10 +35,20 @@ public record ReferenceASTNode(ASTNode param, ASTNode function) implements ASTNo
 
         // If the second is a function, composite the type string and the function name with a dot
         if(function instanceof FunctionCallASTNode functionCall) {
-            if(left instanceof OrbitObject orbitObject && orbitObject.hasFunction(functionCall.name(), functionCall.args().size())) {
+            if(left instanceof OrbitObject orbitObject) {
+                IFunction fun = orbitObject.hasFunction(functionCall.name(), functionCall.args().size());
+
                 List<Object> args = new ArrayList<>();
-                for (ASTNode arg : functionCall.args()) {
-                    args.add(arg.evaluate(context));
+                for (int i = 0; i < functionCall.args().size(); i++) {
+                    ASTNode arg = functionCall.args().get(i);
+                    Variable.Type type1 = fun.getParameters().get(i).second;
+
+                    if(type1 == Variable.Type.CONSUMER) {
+                        args.add(new Consumer(arg));
+                    }
+                    else {
+                        args.add(Utils.cast(arg.evaluate(context), type1.getJavaClass()));
+                    }
                 }
                 return orbitObject.callFunction(functionCall.name(), args, superCall);
             }
