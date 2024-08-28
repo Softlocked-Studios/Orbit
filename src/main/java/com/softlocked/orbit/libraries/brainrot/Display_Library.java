@@ -114,6 +114,16 @@ public class Display_Library implements OrbitJavaLibrary {
             }
         });
 
+        // get pixel
+        context.addFunction(new NativeFunction("var.getPixel", List.of(Variable.Type.ANY, Variable.Type.INT, Variable.Type.INT), Variable.Type.INT) {
+            @Override
+            public Object call(ILocalContext context, List<Object> args) {
+                JFrame frame = (JFrame) args.get(0);
+                BufferedImage image = buffers.get(frames.indexOf(frame)).first;
+                return image.getRGB((int) args.get(1), (int) args.get(2));
+            }
+        });
+
         // Drawing (lines)
         context.addFunction(new NativeFunction("var.drawLine", List.of(Variable.Type.ANY, Variable.Type.INT, Variable.Type.INT, Variable.Type.INT, Variable.Type.INT, Variable.Type.INT), Variable.Type.VOID) {
             @Override

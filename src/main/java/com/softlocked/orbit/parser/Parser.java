@@ -1346,7 +1346,7 @@ public class Parser {
                     throw new ParsingException("Invalid while loop body");
                 }
 
-                List<String> conditionTokens = tokens.subList(i + 1, next.second);
+                List<String> conditionTokens = fetchExpression(tokens.subList(i + 1, next.second), 0).first;
 
                 List<String> bodyTokens = tokens.subList(next.second + 1, bodyEnd - 1);
 
@@ -1425,7 +1425,7 @@ public class Parser {
                 switch (type) {
                     case 1 -> {
                         List<String> initTokens = conditionTokens.subList(0, firstSemicolon);
-                        List<String> condition = conditionTokens.subList(firstSemicolon + 1, secondSemicolon);
+                        List<String> condition = fetchExpression(conditionTokens.subList(firstSemicolon + 1, secondSemicolon), 0).first;
                         List<String> updateTokens = conditionTokens.subList(secondSemicolon + 1, conditionTokens.size());
 
                         ASTNode init = parse(initTokens, context);
@@ -1443,7 +1443,7 @@ public class Parser {
                     }
                     case 2 -> {
                         List<String> initTokens = conditionTokens.subList(0, findNext(conditionTokens, 0, "to"));
-                        List<String> condition = conditionTokens.subList(findNext(conditionTokens, 0, "to") + 1, conditionTokens.size());
+                        List<String> condition = fetchExpression(conditionTokens.subList(findNext(conditionTokens, 0, "to") + 1, conditionTokens.size()), 0).first;
 
                         ASTNode initNode;
                         if(initTokens.size() == 1) {
@@ -1466,7 +1466,7 @@ public class Parser {
                     }
                     case 3 -> {
                         List<String> initTokens = conditionTokens.subList(0, findNext(conditionTokens, 0, "downto"));
-                        List<String> condition = conditionTokens.subList(findNext(conditionTokens, 0, "downto") + 1, conditionTokens.size());
+                        List<String> condition = fetchExpression(conditionTokens.subList(findNext(conditionTokens, 0, "downto") + 1, conditionTokens.size()), 0).first;
 
                         ASTNode initNode;
                         if(initTokens.size() == 1) {
@@ -1489,7 +1489,7 @@ public class Parser {
                     }
                     case 4 -> {
                         List<String> initTokens = conditionTokens.subList(0, findNext(conditionTokens, 0, "in"));
-                        List<String> condition = conditionTokens.subList(findNext(conditionTokens, 0, "in") + 1, conditionTokens.size());
+                        List<String> condition = fetchExpression(conditionTokens.subList(findNext(conditionTokens, 0, "in") + 1, conditionTokens.size()), 0).first;
 
                         ASTNode initNode;
 
@@ -1526,7 +1526,7 @@ public class Parser {
                     throw new ParsingException("Unexpected end of file");
                 }
 
-                List<String> conditionTokens = tokens.subList(i + 1, next.second);
+                List<String> conditionTokens = fetchExpression(tokens.subList(i + 1, next.second), 0).first;
 
                 List<String> ifBody = new ArrayList<>();
                 List<String> elseBody = new ArrayList<>();
@@ -1563,7 +1563,7 @@ public class Parser {
                                         throw new ParsingException("Unexpected end of file");
                                     }
 
-                                    List<String> conditionTokens2 = tokens.subList(nextToken2.second + 1, next2);
+                                    List<String> conditionTokens2 = fetchExpression(tokens.subList(nextToken2.second + 1, next2), 0).first;
 
                                     List<String> elseIfBody;
 
